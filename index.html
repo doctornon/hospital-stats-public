@@ -95,6 +95,12 @@
   /* Footer */
   .footer { text-align: center; font-size: 0.72rem; color: #9ca3af; padding: 16px; margin-top: 8px; }
 
+  /* Referral section */
+  .ref-tab-panel { animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+  #refKpiRow .kpi-card { border-top-color: #ef4444; }
+  .ref-stat-badge { display:inline-block; background:#fee2e2; color:#b91c1c; border-radius:10px; padding:1px 8px; font-size:0.72rem; font-weight:700; margin-left:6px; }
+
   /* Section header */
   .section-title { font-size: 1rem; font-weight: 700; color: #1e3a5f; margin: 8px 0 14px; display: flex; align-items: center; gap: 8px; }
   .section-title::after { content: ''; flex: 1; height: 2px; background: linear-gradient(to right, #3b82f6, transparent); }
@@ -662,6 +668,122 @@
 </div>
 
 </div><!-- end container -->
+
+<!-- ===== REFERRAL SECTION ===== -->
+<div class="container" style="padding-top:0;">
+  <div class="section-title" style="margin-top:0;padding-top:12px;">🚑 สถิติการส่งต่อ (Referral Statistics)</div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar" id="refTabBar">
+    <button class="tab-btn active" onclick="showRefTab('refOverview',this)">ภาพรวม</button>
+    <button class="tab-btn" onclick="showRefTab('refDisease',this)">จำแนกรายโรค</button>
+    <button class="tab-btn" onclick="showRefTab('refSystem',this)">จำแนกตามระบบ</button>
+    <button class="tab-btn" onclick="showRefTab('refRight',this)">จำแนกตามสิทธิ์</button>
+    <button class="tab-btn" onclick="showRefTab('refMode',this)">จำแนกตามการมา รพ.</button>
+    <button class="tab-btn" onclick="showRefTab('refAge',this)">จำแนกตามอายุ</button>
+    <button class="tab-btn" onclick="showRefTab('refArea',this)">จำแนกตามเขตพื้นที่</button>
+    <button class="tab-btn" onclick="showRefTab('refClinic',this)">จำแนกตามคลินิก</button>
+  </div>
+
+  <!-- Tab 1: ภาพรวม -->
+  <div id="refOverview" class="ref-tab-panel">
+    <div class="chart-grid-2" style="margin-bottom:16px;">
+      <div class="chart-card">
+        <div class="chart-title">ยอดส่งต่อรายเดือน (FY2568–FY2569)</div>
+        <div class="chart-sub">ส่ง ER + ตาม 1669</div>
+        <div class="chart-wrap"><canvas id="refMonthChart" height="180"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">ยอดรวมรายปีงบประมาณ</div>
+        <div class="chart-sub">เปรียบเทียบ FY2566–FY2569</div>
+        <div class="chart-wrap"><canvas id="refAnnualChart" height="180"></canvas></div>
+      </div>
+    </div>
+    <!-- KPI mini cards -->
+    <div class="kpi-grid" id="refKpiRow" style="margin-bottom:16px;"></div>
+    <!-- Detail table -->
+    <div class="table-card">
+      <div class="chart-title" style="margin-bottom:10px;">ตารางสรุปรายเดือน – ส่งต่อ &amp; 1669</div>
+      <div class="table-scroll-wrap">
+        <table class="data-table" id="refTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs 2–8: Placeholder panels -->
+  <div id="refDisease" class="ref-tab-panel" style="display:none;">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="insight-title">📋 จำแนกรายโรค (Top Diagnoses Referred)</div>
+      <div class="finding-box" style="background:#f8fafc;border-left:4px solid #94a3b8;padding:16px;border-radius:8px;color:#64748b;font-size:0.85rem;line-height:1.8;">
+        ⏳ <strong>รอข้อมูล</strong> — กรุณาอัพโหลดชีทข้อมูลการส่งต่อแยกตามกลุ่มโรค (ICD-10)<br>
+        ข้อมูลที่ต้องการ: วันที่, รหัสโรค ICD-10, ชื่อโรค, จำนวนครั้ง, ปีงบ<br>
+        ตัวอย่างหัวคอลัมน์: <code>Date | ICD10 | DiagName | Count | FiscalYear</code>
+      </div>
+    </div>
+  </div>
+
+  <div id="refSystem" class="ref-tab-panel" style="display:none;">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="insight-title">🫀 จำแนกตามระบบร่างกาย (Body System)</div>
+      <div class="finding-box" style="background:#f8fafc;border-left:4px solid #94a3b8;padding:16px;border-radius:8px;color:#64748b;font-size:0.85rem;line-height:1.8;">
+        ⏳ <strong>รอข้อมูล</strong> — กรุณาอัพโหลดชีทข้อมูลการส่งต่อแยกตามระบบร่างกาย<br>
+        เช่น หัวใจและหลอดเลือด, ระบบทางเดินหายใจ, ระบบประสาท, อุบัติเหตุ ฯลฯ
+      </div>
+    </div>
+  </div>
+
+  <div id="refRight" class="ref-tab-panel" style="display:none;">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="insight-title">🪪 จำแนกตามสิทธิ์การรักษา (Coverage Type)</div>
+      <div class="finding-box" style="background:#f8fafc;border-left:4px solid #94a3b8;padding:16px;border-radius:8px;color:#64748b;font-size:0.85rem;line-height:1.8;">
+        ⏳ <strong>รอข้อมูล</strong> — กรุณาอัพโหลดชีทข้อมูลการส่งต่อแยกตามสิทธิ์<br>
+        เช่น บัตรทอง, ประกันสังคม, ข้าราชการ, ชำระเอง ฯลฯ
+      </div>
+    </div>
+  </div>
+
+  <div id="refMode" class="ref-tab-panel" style="display:none;">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="insight-title">🚐 จำแนกตามการมาโรงพยาบาล (Referral Mode)</div>
+      <div class="finding-box" style="background:#f8fafc;border-left:4px solid #94a3b8;padding:16px;border-radius:8px;color:#64748b;font-size:0.85rem;line-height:1.8;">
+        ⏳ <strong>รอข้อมูล</strong> — กรุณาอัพโหลดชีทข้อมูลการส่งต่อแยกตามพาหนะ/วิธีการมา<br>
+        เช่น รถพยาบาล, รถส่วนตัว, เดินมาเอง, Helicopter EMS ฯลฯ
+      </div>
+    </div>
+  </div>
+
+  <div id="refAge" class="ref-tab-panel" style="display:none;">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="insight-title">👶🧓 จำแนกตามช่วงอายุ (Age Group)</div>
+      <div class="finding-box" style="background:#f8fafc;border-left:4px solid #94a3b8;padding:16px;border-radius:8px;color:#64748b;font-size:0.85rem;line-height:1.8;">
+        ⏳ <strong>รอข้อมูล</strong> — กรุณาอัพโหลดชีทข้อมูลการส่งต่อแยกตามช่วงอายุ<br>
+        <strong>หมายเหตุ:</strong> กรุณาระบุปีเกิดเป็น ค.ศ. (Christian Era) ไม่ใช่ พ.ศ. เพื่อให้คำนวณอายุได้ถูกต้อง<br>
+        กลุ่มอายุที่แนะนำ: &lt;1 ปี, 1–5 ปี, 6–14 ปี, 15–29 ปี, 30–59 ปี, 60+ ปี
+      </div>
+    </div>
+  </div>
+
+  <div id="refArea" class="ref-tab-panel" style="display:none;">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="insight-title">🗺️ จำแนกตามเขตพื้นที่อาศัย (Residential Area)</div>
+      <div class="finding-box" style="background:#f8fafc;border-left:4px solid #94a3b8;padding:16px;border-radius:8px;color:#64748b;font-size:0.85rem;line-height:1.8;">
+        ⏳ <strong>รอข้อมูล</strong> — กรุณาอัพโหลดชีทข้อมูลการส่งต่อแยกตามที่อยู่อาศัย<br>
+        เช่น ในเขต อ.เมืองสระบุรี, ต่างอำเภอในจังหวัด, ต่างจังหวัด ฯลฯ
+      </div>
+    </div>
+  </div>
+
+  <div id="refClinic" class="ref-tab-panel" style="display:none;">
+    <div class="chart-card" style="margin-bottom:16px;">
+      <div class="insight-title">🏥 จำแนกตามคลินิก (Clinic of Origin)</div>
+      <div class="finding-box" style="background:#f8fafc;border-left:4px solid #94a3b8;padding:16px;border-radius:8px;color:#64748b;font-size:0.85rem;line-height:1.8;">
+        ⏳ <strong>รอข้อมูล</strong> — กรุณาอัพโหลดชีทข้อมูลการส่งต่อแยกตามคลินิกต้นทาง<br>
+        เช่น คลินิกโรคเรื้อรัง, คลินิก ANC, คลินิกเด็กดี, ห้องฉุกเฉิน ฯลฯ
+      </div>
+    </div>
+  </div>
+
+</div><!-- end referral section -->
 
 <div class="footer">สร้างโดย Claude AI · ข้อมูลจาก Google Sheets "บันทึกER_20221208" · โรงพยาบาลสระบุรี 2 · พฤษภาคม 2569</div>
 
@@ -2141,6 +2263,175 @@ function setTendency(type) {
   }
 }
 
+// ========== REFERRAL SECTION ==========
+function showRefTab(panelId, btn) {
+  document.querySelectorAll('.ref-tab-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('#refTabBar .tab-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById(panelId);
+  if (panel) panel.style.display = '';
+  if (btn) btn.classList.add('active');
+}
+
+function buildReferral() {
+  const REF_MONTHS = MONTHS; // same 44-month array
+  const sendER  = DATA.sendER;
+  const call1669 = DATA.call1669;
+
+  // ---- KPI mini cards ----
+  const lastIdx = LAST_IDX; // เม.ย.69 = index 42
+  const fy68Start = 24, fy68End = 35;
+  const fy69Start = 36;
+
+  // FY2568 totals
+  const fy68ER  = sendER.slice(fy68Start, fy68End+1).reduce((a,b)=>a+b,0);
+  const fy68c16 = call1669.slice(fy68Start, fy68End+1).reduce((a,b)=>a+b,0);
+  // FY2569 YTD (ต.ค.68–เม.ย.69, idx36-42)
+  const fy69ER  = sendER.slice(fy69Start, lastIdx+1).reduce((a,b)=>a+b,0);
+  const fy69c16 = call1669.slice(fy69Start, lastIdx+1).reduce((a,b)=>a+b,0);
+
+  const kpiData = [
+    { label:'ส่ง ER (เม.ย.69)', val: sendER[lastIdx], sub:'ครั้ง/เดือน', color:'red' },
+    { label:'ตาม 1669 (เม.ย.69)', val: call1669[lastIdx], sub:'ครั้ง/เดือน', color:'purple' },
+    { label:'รวมส่งต่อ (เม.ย.69)', val: (sendER[lastIdx]||0)+(call1669[lastIdx]||0), sub:'ครั้ง/เดือน', color:'orange' },
+    { label:'รวม FY2568', val: fy68ER+fy68c16, sub:`ER:${fy68ER} / 1669:${fy68c16}`, color:'blue' },
+    { label:'รวม FY2569 (YTD)', val: fy69ER+fy69c16, sub:`ER:${fy69ER} / 1669:${fy69c16}`, color:'teal' },
+  ];
+  const kpiRow = document.getElementById('refKpiRow');
+  if (kpiRow) {
+    kpiRow.innerHTML = kpiData.map(k => `
+      <div class="kpi-card ${k.color}">
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-value">${k.val.toLocaleString()}</div>
+        <div class="kpi-month">${k.sub}</div>
+      </div>`).join('');
+  }
+
+  // ---- Monthly Chart (FY2568+2569 = idx24-42) ----
+  const chartMonths = REF_MONTHS.slice(24, lastIdx+1);
+  const chartER    = sendER.slice(24, lastIdx+1);
+  const chartC16   = call1669.slice(24, lastIdx+1);
+  const chartTotal = chartER.map((v,i) => v + chartC16[i]);
+
+  const ctxM = document.getElementById('refMonthChart');
+  if (ctxM) {
+    new Chart(ctxM, {
+      type: 'bar',
+      data: {
+        labels: chartMonths,
+        datasets: [
+          { label:'ส่ง ER', data: chartER, backgroundColor:'rgba(239,68,68,0.75)', borderColor:'#ef4444', borderWidth:1.5, stack:'s' },
+          { label:'ตาม 1669', data: chartC16, backgroundColor:'rgba(139,92,246,0.75)', borderColor:'#8b5cf6', borderWidth:1.5, stack:'s' },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position:'top', labels:{ font:{size:11}, boxWidth:12 } },
+          tooltip: {
+            callbacks: {
+              afterBody: items => {
+                const i = items[0]?.dataIndex;
+                return i != null ? [`รวม: ${chartTotal[i]} ครั้ง`] : [];
+              }
+            }
+          }
+        },
+        scales: {
+          x: { stacked:true, ticks:{ font:{size:10}, maxRotation:45 } },
+          y: { stacked:true, beginAtZero:true, ticks:{ precision:0 }, title:{ display:true, text:'ครั้ง', font:{size:11} } }
+        }
+      }
+    });
+  }
+
+  // ---- Annual Chart ----
+  const fyTotals = [
+    { fy:'FY2566', er: sendER.slice(0,12).reduce((a,b)=>a+b,0), c16: call1669.slice(0,12).reduce((a,b)=>a+b,0) },
+    { fy:'FY2567', er: sendER.slice(12,24).reduce((a,b)=>a+b,0), c16: call1669.slice(12,24).reduce((a,b)=>a+b,0) },
+    { fy:'FY2568', er: fy68ER, c16: fy68c16 },
+    { fy:'FY2569*', er: fy69ER, c16: fy69c16 },
+  ];
+  const ctxA = document.getElementById('refAnnualChart');
+  if (ctxA) {
+    new Chart(ctxA, {
+      type: 'bar',
+      data: {
+        labels: fyTotals.map(f=>f.fy),
+        datasets: [
+          { label:'ส่ง ER', data: fyTotals.map(f=>f.er), backgroundColor:'rgba(239,68,68,0.8)', borderColor:'#ef4444', borderWidth:2 },
+          { label:'ตาม 1669', data: fyTotals.map(f=>f.c16), backgroundColor:'rgba(139,92,246,0.8)', borderColor:'#8b5cf6', borderWidth:2 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position:'top', labels:{ font:{size:11}, boxWidth:12 } },
+          tooltip: {
+            callbacks: {
+              afterBody: items => {
+                const d = items[0]?.dataIndex;
+                if (d==null) return [];
+                const t = fyTotals[d];
+                return [`รวม: ${(t.er+t.c16).toLocaleString()} ครั้ง`];
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks:{ font:{size:11} } },
+          y: { beginAtZero:true, ticks:{ precision:0 }, title:{ display:true, text:'ครั้ง', font:{size:11} } }
+        }
+      }
+    });
+  }
+
+  // ---- Summary Table ----
+  const refTable = document.getElementById('refTable');
+  if (!refTable) return;
+
+  // Build table: rows = ส่ง ER / ตาม 1669 / รวม; cols = FY sums + recent months
+  const fyCols = [
+    { label:'FY2566', er: fyTotals[0].er, c16: fyTotals[0].c16 },
+    { label:'FY2567', er: fyTotals[1].er, c16: fyTotals[1].c16 },
+    { label:'FY2568', er: fyTotals[2].er, c16: fyTotals[2].c16 },
+    { label:'FY2569*', er: fyTotals[3].er, c16: fyTotals[3].c16 },
+  ];
+
+  // Recent 12 months newest first (idx 42 down to 31)
+  const recentN = Math.min(12, lastIdx - 23);
+  const recentIdxs = Array.from({length: recentN}, (_, i) => lastIdx - i);
+
+  let html = '<thead><tr>';
+  html += '<th style="text-align:left;min-width:120px;">ประเภท</th>';
+  // FY columns
+  fyCols.forEach(f => html += `<th>${f.label}</th>`);
+  // Recent month columns
+  recentIdxs.forEach(i => html += `<th>${REF_MONTHS[i]}</th>`);
+  html += '</tr></thead><tbody>';
+
+  function refRow(label, fyData, recentData, style='') {
+    let r = `<tr style="${style}"><td style="text-align:left;font-weight:600;">${label}</td>`;
+    fyData.forEach(v => r += `<td>${v.toLocaleString()}</td>`);
+    recentData.forEach(v => r += `<td>${v||0}</td>`);
+    r += '</tr>';
+    return r;
+  }
+
+  const erFyVals  = fyCols.map(f => f.er);
+  const c16FyVals = fyCols.map(f => f.c16);
+  const totFyVals = fyCols.map(f => f.er + f.c16);
+  const erRecent  = recentIdxs.map(i => sendER[i]||0);
+  const c16Recent = recentIdxs.map(i => call1669[i]||0);
+  const totRecent = recentIdxs.map((i,k) => (sendER[i]||0)+(call1669[i]||0));
+
+  html += refRow('🚑 ส่ง ER', erFyVals, erRecent, 'background:#fff5f5;');
+  html += refRow('📞 ตาม 1669', c16FyVals, c16Recent, 'background:#f5f3ff;');
+  html += refRow('📊 รวมทั้งหมด', totFyVals, totRecent, 'background:#f0f9ff;font-weight:700;');
+  html += '</tbody>';
+
+  refTable.innerHTML = html;
+}
+
 // ========== INIT ==========
 function safeRun(label, fn) {
   try { fn(); }
@@ -2162,6 +2453,7 @@ safeRun('buildQuarterlyStats', buildQuarterlyStats);
 safeRun('buildAnnualStats', buildAnnualStats);
 safeRun('buildForecast', buildForecast);
 safeRun('buildTable', buildTable);
+safeRun('buildReferral', buildReferral);
 
 // Register all charts for expand/download
 setTimeout(() => {
