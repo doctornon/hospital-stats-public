@@ -2638,35 +2638,55 @@ function buildDataQuality() {
     </div>
   </div>`;
 
-  // === 2. สาเหตุที่เป็นไปได้ (พ.ศ./ค.ศ.) ===
+  // === 2. ROOT CAUSE CONFIRMED ===
   html += `<div class="dq-section">
-    <div class="dq-section-title">📚 สาเหตุที่เป็นไปได้ — พ.ศ./ค.ศ. ปะปน</div>
+    <div class="dq-section-title">🔎 สาเหตุที่แท้จริง — Format วันที่ไม่สม่ำเสมอ (ยืนยันแล้ว)</div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:0.8rem;">
+      <strong style="color:#b91c1c;">⚠️ ข้อมูลส่งต่อ มี.ค.–เม.ย. 69 มีอยู่ในชีท referhosp แต่ถูก filter ไม่เจอ</strong><br>
+      เพราะวันที่บันทึกในหลาย format ที่ Google Sheets ไม่รู้จักเป็น Date จริง ทำให้ COUNTIFS นับไม่ได้
+    </div>
+    <div style="overflow-x:auto;margin-bottom:10px;">
+    <table style="border-collapse:collapse;width:100%;font-size:0.78rem;">
+      <thead>
+        <tr style="background:#fee2e2;">
+          <th style="padding:6px 10px;border:1px solid #fecaca;text-align:left;">ที่พบในชีท</th>
+          <th style="padding:6px 10px;border:1px solid #fecaca;">ปัญหา</th>
+          <th style="padding:6px 10px;border:1px solid #fecaca;">Format ที่ถูกต้อง</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background:#fff;">
+          <td style="padding:6px 10px;border:1px solid #fef2f2;font-family:monospace;color:#b91c1c;">5 มี.ค.69</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;">ปีย่อเหลือ 2 หลัก "69" แทน "2569"</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;color:#059669;font-family:monospace;">5 มี.ค. 2569</td>
+        </tr>
+        <tr style="background:#fffbeb;">
+          <td style="padding:6px 10px;border:1px solid #fef2f2;font-family:monospace;color:#b91c1c;">2มีค.2569</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;">ไม่มี space, ชื่อเดือนขาดจุด (มีค แทน มี.ค.)</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;color:#059669;font-family:monospace;">2 มี.ค. 2569</td>
+        </tr>
+        <tr style="background:#fff;">
+          <td style="padding:6px 10px;border:1px solid #fef2f2;font-family:monospace;color:#b91c1c;">20เมย.2569</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;">ไม่มี space, เมย แทน เม.ย.</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;color:#059669;font-family:monospace;">20 เม.ย. 2569</td>
+        </tr>
+        <tr style="background:#fffbeb;">
+          <td style="padding:6px 10px;border:1px solid #fef2f2;font-family:monospace;color:#b91c1c;">16 มี.ค.2569</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;">ไม่มี space ระหว่างเดือนกับปี</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;color:#059669;font-family:monospace;">16 มี.ค. 2569</td>
+        </tr>
+        <tr style="background:#fff;">
+          <td style="padding:6px 10px;border:1px solid #fef2f2;font-family:monospace;color:#6b7280;">(ว่าง)</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;">แถวว่างคั่นอยู่ในข้อมูล</td>
+          <td style="padding:6px 10px;border:1px solid #fef2f2;color:#6b7280;">ลบแถวว่างออก</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
     <div class="dq-guide">
-      <strong>พ.ศ. (Thai Buddhist Era) = ค.ศ. (Christian Era) + 543</strong><br>
-      <table style="border-collapse:collapse;width:100%;margin:8px 0;font-size:0.78rem;">
-        <tr style="background:#ede9fe;">
-          <th style="padding:5px 8px;border:1px solid #ddd;text-align:left;">เดือน (พ.ศ.)</th>
-          <th style="padding:5px 8px;border:1px solid #ddd;">เท่ากับ (ค.ศ.)</th>
-          <th style="padding:5px 8px;border:1px solid #ddd;">ถ้าพิมพ์ ค.ศ. ในช่อง พ.ศ.</th>
-          <th style="padding:5px 8px;border:1px solid #ddd;">ถ้าพิมพ์ พ.ศ. ในช่อง ค.ศ.</th>
-        </tr>
-        <tr style="background:#fff5f5;">
-          <td style="padding:5px 8px;border:1px solid #ddd;font-weight:600;">มี.ค. 2569</td>
-          <td style="padding:5px 8px;border:1px solid #ddd;text-align:center;">มี.ค. 2026</td>
-          <td style="padding:5px 8px;border:1px solid #ddd;color:#b91c1c;">Record จัดเป็น มี.ค. 2026 พ.ศ. (ปีอนาคต) → หาย</td>
-          <td style="padding:5px 8px;border:1px solid #ddd;color:#b91c1c;">Record จัดเป็น มี.ค. 2569 ค.ศ. → หายไปอีก 543 ปี</td>
-        </tr>
-        <tr style="background:#fff5f5;">
-          <td style="padding:5px 8px;border:1px solid #ddd;font-weight:600;">เม.ย. 2569</td>
-          <td style="padding:5px 8px;border:1px solid #ddd;text-align:center;">เม.ย. 2026</td>
-          <td style="padding:5px 8px;border:1px solid #ddd;color:#b91c1c;">Record จัดเป็น เม.ย. 2026 พ.ศ. → หาย</td>
-          <td style="padding:5px 8px;border:1px solid #ddd;color:#b91c1c;">Record จัดเป็น เม.ย. 2569 ค.ศ. → หาย</td>
-        </tr>
-      </table>
-      <strong>สาเหตุอื่นที่เป็นไปได้:</strong><br>
-      🔸 เจ้าหน้าที่ยังไม่ได้กรอกข้อมูล มี.ค.–เม.ย.69 ในชีทส่งต่อ<br>
-      🔸 กรอกข้อมูลในชีทอื่นที่ dashboard ยังไม่ได้ดึงมา<br>
-      🔸 วันที่บันทึกเป็น ค.ศ. 2026 แต่ชีทคาดหวัง พ.ศ. 2569 → ระบบกรอง filter ผิดพลาด
+      <strong>ผลที่เกิดขึ้น:</strong> เมื่อ Sheets ไม่รู้จักค่าเป็น Date จริง → เก็บเป็น text → COUNTIFS ด้วย date range จึงนับไม่เจอ → ยอดส่งต่อแสดงเป็น 0 ทั้งที่ข้อมูลมีอยู่<br><br>
+      <strong>วิธีแก้ (ดูไฟล์ fix_referhosp_dates.gs):</strong><br>
+      ใช้ Google Apps Script ที่ให้ไว้เพื่อ standardize วันที่ทั้งหมดโดยอัตโนมัติ หรือใช้สูตรด้านล่างใน Sheets
     </div>
   </div>`;
 
@@ -2709,32 +2729,35 @@ function buildDataQuality() {
   }
   html += `</div>`;
 
-  // === 4. วิธีตรวจและแก้ไขใน Google Sheets ===
+  // === 4. วิธีแก้ไข ===
   html += `<div class="dq-section">
-    <div class="dq-section-title">🛠️ วิธีตรวจสอบและแก้ไขใน Google Sheets (ชีทส่งต่อ)</div>
+    <div class="dq-section-title">🛠️ วิธีแก้ไข Format วันที่ใน Google Sheets</div>
     <div class="dq-guide">
-      <strong>ขั้นที่ 1 — ตรวจสอบว่า format ปีใน column วันที่เป็นอะไร</strong><br>
-      เพิ่ม column ชั่วคราวข้างๆ วันที่:<br>
-      <code>=IF(YEAR(A2)&gt;2500, "พ.ศ. "&YEAR(A2), "ค.ศ. "&YEAR(A2))</code><br>
-      → ถ้าเห็น "ค.ศ. 2026" ปะปนกับ "พ.ศ. 2569" แสดงว่ามีการพิมพ์สลับ<br><br>
+      <strong>วิธีที่ 1 (แนะนำ) — ใช้ Google Apps Script อัตโนมัติ</strong><br>
+      ดาวน์โหลดไฟล์ <strong>fix_referhosp_dates.gs</strong> แล้วทำตามขั้นตอน:<br>
+      1. เปิด Google Sheets → <code>Extensions → Apps Script</code><br>
+      2. วาง code ทั้งหมดจากไฟล์ → Save<br>
+      3. เลือก function <code>fixReferhospDates</code> → Run → อนุญาต permission<br>
+      4. Script จะเพิ่ม column "วันที่แก้ไข (CE)" พร้อมสถานะแต่ละแถว<br>
+      5. รัน <code>countReferralByMonth</code> เพื่อนับยอดส่งต่อรายเดือนที่ถูกต้อง<br><br>
 
-      <strong>ขั้นที่ 2 — นับ record ที่หายไปในช่วงที่สงสัย</strong><br>
-      นับ record มี.ค.69 (ถ้าชีทใช้ พ.ศ.): <code>=COUNTIFS(A:A,"&gt;="&DATE(2569,3,1),A:A,"&lt;="&DATE(2569,3,31))</code><br>
-      นับ record มี.ค.69 (ถ้าชีทใช้ ค.ศ.): <code>=COUNTIFS(A:A,"&gt;="&DATE(2026,3,1),A:A,"&lt;="&DATE(2026,3,31))</code><br>
-      → ถ้า format ถูกต้อง ต้องมี record (จาก ส่ง ER ≈20, ตาม 1669 ≈18 ต่อเดือน)<br><br>
+      <strong>วิธีที่ 2 — สูตร Sheets (ไม่ต้อง Script)</strong><br>
+      ตรวจสอบว่าแต่ละ cell เป็น date จริงหรือ text:<br>
+      <code>=IF(ISNUMBER(A2), "✅ date จริง", "⚠️ text: "&A2)</code><br><br>
+      นับด้วย text matching (รองรับ format หลากหลาย):<br>
+      มี.ค.69: <code>=SUMPRODUCT((REGEXMATCH(TO_TEXT(A2:A500),"มี[^\s]*ค"))*REGEXMATCH(TO_TEXT(A2:A500),"(2569|\.69)"))</code><br>
+      เม.ย.69: <code>=SUMPRODUCT((REGEXMATCH(TO_TEXT(A2:A500),"เม[^\s]*ย"))*REGEXMATCH(TO_TEXT(A2:A500),"(2569|\.69)"))</code><br><br>
 
-      <strong>ขั้นที่ 3 — ค้นหา record ที่ปีผิด</strong><br>
-      <code>=IF(OR(AND(YEAR(A2)&gt;2500,YEAR(A2)&lt;2560), AND(YEAR(A2)&gt;2030,YEAR(A2)&lt;2500)), "⚠️ ปีผิด", "OK")</code><br>
-      กรอง "⚠️ ปีผิด" → sort → ดูว่าปีผิดเป็นเท่าไร<br><br>
+      <strong>วิธีที่ 3 — Standardize ด้วยสูตร (column ใหม่)</strong><br>
+      แทนที่ปีย่อ "69" → "2569":<br>
+      <code>=IF(REGEXMATCH(TO_TEXT(A2)," 69$"), SUBSTITUTE(TO_TEXT(A2)," 69"," 2569"), TO_TEXT(A2))</code><br>
+      เพิ่ม space ระหว่างเดือนกับปี (ถ้าขาด):<br>
+      <code>=REGEXREPLACE(TO_TEXT(A2),"([ก-๙])(\d{4})","$1 $2")</code><br><br>
 
-      <strong>ขั้นที่ 4 — แก้ไข (Bulk fix)</strong><br>
-      ถ้าพบว่าพิมพ์ ค.ศ. แทน พ.ศ. → บวก 543: <code>=DATE(YEAR(A2)+543, MONTH(A2), DAY(A2))</code><br>
-      ถ้าพบว่าพิมพ์ พ.ศ. แทน ค.ศ. → ลบ 543: <code>=DATE(YEAR(A2)-543, MONTH(A2), DAY(A2))</code><br><br>
-
-      <strong>ขั้นที่ 5 — ป้องกันในอนาคต</strong><br>
-      • Data Validation: กำหนดให้ column วันที่รับเฉพาะปี พ.ศ. <code>2560–2580</code> หรือ ค.ศ. <code>2017–2037</code><br>
-      • เพิ่ม column ตรวจสอบ: <code>=TEXT(A2,"yyyy") &amp; " → " &amp; IF(YEAR(A2)&gt;2500,"พ.ศ.","ค.ศ.")</code><br>
-      • ระบุชัดเจนในหัวคอลัมน์ว่าใช้ปีอะไร เช่น "วันที่ (พ.ศ.)" หรือ "Date (CE)"
+      <strong>ป้องกันในอนาคต</strong><br>
+      • ใช้ Dropdown สำหรับเดือน แทนการพิมพ์อิสระ<br>
+      • หรือแยก column วัน / เดือน / ปี เป็น 3 column ชัดเจน<br>
+      • ล็อค format ใน column วันที่: Format → Number → Date <code>D/M/YYYY</code> (ค.ศ.)
     </div>
   </div>`;
 
