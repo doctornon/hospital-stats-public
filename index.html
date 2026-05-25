@@ -101,6 +101,24 @@
   #refKpiRow .kpi-card { border-top-color: #ef4444; }
   .ref-stat-badge { display:inline-block; background:#fee2e2; color:#b91c1c; border-radius:10px; padding:1px 8px; font-size:0.72rem; font-weight:700; margin-left:6px; }
 
+  /* Data Quality panel */
+  .dq-panel { background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); margin-bottom:20px; overflow:hidden; }
+  .dq-header { background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff; padding:12px 18px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
+  .dq-header h3 { font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .dq-header .dq-badge { background:rgba(255,255,255,0.25); border-radius:12px; padding:2px 10px; font-size:0.8rem; font-weight:700; }
+  .dq-body { padding:16px 18px; display:none; }
+  .dq-body.open { display:block; }
+  .dq-section { margin-bottom:16px; }
+  .dq-section-title { font-size:0.8rem; font-weight:700; color:#6d28d9; margin-bottom:8px; border-bottom:1px solid #ede9fe; padding-bottom:4px; }
+  .dq-issue { display:flex; align-items:flex-start; gap:10px; padding:7px 10px; border-radius:8px; margin-bottom:6px; font-size:0.8rem; line-height:1.5; }
+  .dq-issue.critical { background:#fef2f2; border-left:3px solid #ef4444; }
+  .dq-issue.warning  { background:#fffbeb; border-left:3px solid #f59e0b; }
+  .dq-issue.info     { background:#f0fdf4; border-left:3px solid #10b981; }
+  .dq-icon { font-size:1.1rem; flex-shrink:0; margin-top:1px; }
+  .dq-guide { background:#f5f3ff; border-radius:8px; padding:12px 14px; font-size:0.79rem; line-height:1.8; color:#4c1d95; }
+  .dq-guide code { background:#ede9fe; padding:1px 5px; border-radius:4px; font-family:monospace; font-size:0.78rem; }
+  .dq-ok { color:#059669; font-weight:700; }
+
   /* Section header */
   .section-title { font-size: 1rem; font-weight: 700; color: #1e3a5f; margin: 8px 0 14px; display: flex; align-items: center; gap: 8px; }
   .section-title::after { content: ''; flex: 1; height: 2px; background: linear-gradient(to right, #3b82f6, transparent); }
@@ -239,6 +257,17 @@
 </div>
 <div class="note-bar">
   ⚠️ <strong>หมายเหตุ:</strong> มีการเปลี่ยนรูปแบบบันทึก 2 ครั้ง (แสดงเส้นประสีน้ำตาลในกราฟ): <strong>(1) ก่อน กค.68</strong> = ระบบเดิม นับ OPD ทุก encounter รวมถึง walk-in/refill/วัคซีน ยอดรวม ~7,000–9,000/เดือน; <strong>(2) ตั้งแต่ สค.68</strong> = ระบบใหม่ นิยาม OPD แคบลง ยอดรวม ~5,000–6,000/เดือน แต่ ER บันทึกครบถ้วนมากขึ้น → <em>ไม่ควรเปรียบ YoY ข้ามช่วงนี้โดยตรง</em> · ยอดฉีดยาสูงผิดปกติ พย.65–มีค.66 เนื่องจากโครงการวัคซีน COVID-19 · พ.ค.69* = ข้อมูลบางส่วน (5 วัน)
+</div>
+
+<!-- Data Quality Panel -->
+<div class="container" style="padding-bottom:0;">
+  <div class="dq-panel">
+    <div class="dq-header" onclick="this.nextElementSibling.classList.toggle('open')">
+      <h3>🔍 ตรวจสอบคุณภาพข้อมูล — ปี พ.ศ. / ค.ศ. ปะปน</h3>
+      <span class="dq-badge" id="dqBadge">กำลังตรวจสอบ…</span>
+    </div>
+    <div class="dq-body" id="dqBody"></div>
+  </div>
 </div>
 
 <!-- Chart Modal Overlay -->
@@ -2432,12 +2461,231 @@ function buildReferral() {
   refTable.innerHTML = html;
 }
 
+// ========== DATA QUALITY CHECK ==========
+function buildDataQuality() {
+  const body = document.getElementById('dqBody');
+  const badge = document.getElementById('dqBadge');
+  if (!body || !badge) return;
+
+  // ---- Define all data series with Thai labels ----
+  const SERIES = [
+    { key:'totalVisits', label:'ยอดบริการรวม',       expectFY:[true,true,true,true] },
+    { key:'erTotal',     label:'ยอด ER รวม',          expectFY:[true,true,true,true] },
+    { key:'opdTotal',    label:'ยอด OPD รวม',         expectFY:[true,true,true,true] },
+    { key:'npExam',      label:'ตรวจ NP',              expectFY:[true,true,true,true] },
+    { key:'injections',  label:'ฉีดยา',               expectFY:[true,true,true,true] },
+    { key:'ivDrip',      label:'IV Drip',              expectFY:[true,true,true,true] },
+    { key:'woundLarge',  label:'ทำแผลใหญ่',           expectFY:[true,true,true,true] },
+    { key:'woundMedium', label:'ทำแผลกลาง',           expectFY:[true,true,true,true] },
+    { key:'woundSmall',  label:'ทำแผลเล็ก',           expectFY:[true,true,true,true] },
+    { key:'suture',      label:'เย็บแผล',              expectFY:[true,true,true,true] },
+    { key:'scheduled',   label:'นัดปฐมภูมิ',           expectFY:[false,false,true,true] },
+    { key:'observation', label:'Observe',              expectFY:[false,false,false,true] },
+    { key:'sendER',      label:'ส่ง ER',               expectFY:[false,false,true,true] },
+    { key:'call1669',    label:'ตาม 1669',             expectFY:[false,false,true,true] },
+    { key:'ekg',         label:'EKG',                  expectFY:[false,false,false,true] },
+    { key:'dtx',         label:'DTX',                  expectFY:[false,false,false,true] },
+    { key:'wccAppt',     label:'WCC นัด',              expectFY:[true,true,false,true] },
+    { key:'wccActual',   label:'WCC จริง',             expectFY:[true,true,false,true] },
+    { key:'refill',      label:'Refill',               expectFY:[false,false,false,true] },
+    { key:'walkin',      label:'Walk-in',              expectFY:[false,false,false,true] },
+  ];
+
+  // FY index ranges
+  const FY = [
+    { name:'FY2566', label:'ปีงบ 2566 (ต.ค.65–ก.ย.66)', s:0,  e:11, ce:'2022–2023' },
+    { name:'FY2567', label:'ปีงบ 2567 (ต.ค.66–ก.ย.67)', s:12, e:23, ce:'2023–2024' },
+    { name:'FY2568', label:'ปีงบ 2568 (ต.ค.67–ก.ย.68)', s:24, e:35, ce:'2024–2025' },
+    { name:'FY2569', label:'ปีงบ 2569 (ต.ค.68–เม.ย.69)', s:36, e:LAST_IDX, ce:'2025–2026' },
+  ];
+
+  const issues = []; // { level:'critical'|'warning'|'info', text, detail }
+
+  SERIES.forEach(s => {
+    const arr = DATA[s.key];
+    if (!arr) return;
+
+    FY.forEach((fy, fi) => {
+      const slice = arr.slice(fy.s, fy.e + 1);
+      const nonZero = slice.filter(v => v > 0).length;
+      const total = slice.length;
+      const expected = s.expectFY[fi];
+
+      if (!expected) return; // ไม่ได้ expect ข้อมูลใน FY นี้
+
+      if (nonZero === 0) {
+        // FY ทั้งปีเป็น 0 ทั้งที่ expect มีข้อมูล → น่าสงสัยมาก
+        issues.push({
+          level: 'critical',
+          series: s.label,
+          fy: fy.name,
+          fyLabel: fy.label,
+          ce: fy.ce,
+          type: 'full_fy_zero',
+          text: `<strong>${s.label}</strong> — ข้อมูล<strong>หายทั้งปี ${fy.name}</strong> (${fy.label})`
+            + ` มีค่า 0 ทุกเดือนทั้ง ${total} เดือน`,
+          detail: `อาจเกิดจากบันทึกปี ค.ศ. ${fy.ce} แทนที่จะเป็น พ.ศ. ${fy.name.replace('FY','')}–${(parseInt(fy.name.replace('FY',''))+1)}`
+            + ` หรือบันทึก พ.ศ. ${fy.name.replace('FY','')} แทน ค.ศ. ${fy.ce}`
+        });
+      } else if (nonZero < total * 0.4 && nonZero > 0) {
+        // มีข้อมูลบางส่วนน้อยกว่า 40% → อาจพิมพ์ปีผิดบางส่วน
+        issues.push({
+          level: 'warning',
+          series: s.label,
+          fy: fy.name,
+          fyLabel: fy.label,
+          ce: fy.ce,
+          type: 'partial_fy_zero',
+          text: `<strong>${s.label}</strong> — ข้อมูล${fy.name} มีเพียง ${nonZero}/${total} เดือน`
+            + ` (${Math.round(nonZero/total*100)}%) มีค่า > 0`,
+          detail: `เดือนที่มีค่า 0: ${slice.map((v,i)=>v===0?MONTHS[fy.s+i]:null).filter(Boolean).join(', ')}`
+        });
+      }
+    });
+
+    // ตรวจจับ Interior gaps: เดือนที่ 0 ขนาบด้วยเดือนที่มีข้อมูล (เฉพาะช่วงที่ expect มีข้อมูล)
+    for (let i = 1; i < arr.length - 1; i++) {
+      const fyIdx = FY.findIndex(f => i >= f.s && i <= f.e);
+      if (fyIdx < 0 || !s.expectFY[fyIdx]) continue;
+      if (arr[i] === 0 && arr[i-1] > 0 && arr[i+1] > 0) {
+        issues.push({
+          level: 'warning',
+          series: s.label,
+          fy: FY[fyIdx].name,
+          fyLabel: FY[fyIdx].label,
+          type: 'interior_gap',
+          text: `<strong>${s.label}</strong> — เดือน <strong>${MONTHS[i]}</strong> มีค่า 0`
+            + ` ทั้งที่ ${MONTHS[i-1]} = ${arr[i-1]} และ ${MONTHS[i+1]} = ${arr[i+1]}`,
+          detail: `อาจพิมพ์ปีผิดทำให้บันทึกตกในเดือนอื่น หรือลืมกรอกข้อมูล`
+        });
+      }
+    }
+  });
+
+  // ---- หาซีรีย์ที่น่าสงสัยที่สุด ----
+  const criticalCount = issues.filter(i => i.level === 'critical').length;
+  const warningCount  = issues.filter(i => i.level === 'warning').length;
+
+  // ---- สร้าง HTML ----
+  let html = '';
+
+  // === ส่วน: คำอธิบาย พ.ศ./ค.ศ. ===
+  html += `<div class="dq-section">
+    <div class="dq-section-title">📚 ทำไม พ.ศ./ค.ศ. ปะปนถึงทำให้สถิติหาย?</div>
+    <div class="dq-guide">
+      <strong>พ.ศ. (Buddhist Era) = ค.ศ. (Christian Era) + 543</strong><br>
+      ตัวอย่าง: เมษายน 2568 พ.ศ. = เมษายน 2025 ค.ศ.<br><br>
+      <strong>กรณีที่พบบ่อย:</strong><br>
+      🔴 พิมพ์ปีเกิดเป็น ค.ศ. (เช่น 1985) แต่ระบบรอรับ พ.ศ. → อายุคลาดเคลื่อน<br>
+      🔴 กรอกวันที่บริการเป็น ค.ศ. (เช่น 2024) แทนที่จะเป็น พ.ศ. (2567) → ระบบจัดเข้าปีที่ผิด<br>
+      🔴 กรอกปี พ.ศ. ในช่องที่ระบบคาดหวัง ค.ศ. → วันที่เป็น ปี 2567 ค.ศ. ซึ่งไม่มีอยู่ในอนาคต → record หาย<br><br>
+      <strong>วิธีตรวจใน Google Sheets:</strong><br>
+      1. กรอง column วันที่ ดูว่ามีปีที่ผิดปกติ เช่น <code>2022, 2023, 2024</code> ปะปนกับ <code>2565, 2566, 2567</code> หรือไม่<br>
+      2. ใช้สูตร <code>=IF(YEAR(A2)>2500,"พ.ศ.","ค.ศ.")</code> ตรวจทุกแถว<br>
+      3. นับ record ที่ตกนอกช่วงที่คาดหวัง: <code>=COUNTIFS(A:A,"&gt;="&DATE(2567,10,1),A:A,"&lt;="&DATE(2568,9,30))</code>
+    </div>
+  </div>`;
+
+  // === ส่วน: ผลการตรวจสอบ ===
+  html += `<div class="dq-section">
+    <div class="dq-section-title">🔬 ผลการตรวจสอบอัตโนมัติ (จากข้อมูลใน Dashboard)</div>`;
+
+  if (issues.length === 0) {
+    html += `<div class="dq-issue info"><span class="dq-icon">✅</span><div><span class="dq-ok">ไม่พบปัญหา</span> — ไม่พบเดือนที่ข้อมูลหายผิดปกติในซีรีย์ที่ตรวจสอบ</div></div>`;
+  } else {
+    // Critical ก่อน
+    const crits = issues.filter(i => i.level === 'critical');
+    const warns  = issues.filter(i => i.level === 'warning' && i.type !== 'interior_gap');
+    const gaps   = issues.filter(i => i.level === 'warning' && i.type === 'interior_gap');
+
+    if (crits.length) {
+      html += `<div style="font-size:0.78rem;font-weight:700;color:#b91c1c;margin-bottom:6px;">🚨 พบข้อมูลหายทั้งปีงบ — ต้องตรวจสอบด่วน (${crits.length} รายการ)</div>`;
+      crits.forEach(issue => {
+        html += `<div class="dq-issue critical">
+          <span class="dq-icon">❌</span>
+          <div>
+            ${issue.text}<br>
+            <span style="color:#6b7280;font-size:0.75rem;">💡 ${issue.detail}</span>
+          </div>
+        </div>`;
+      });
+    }
+
+    if (warns.length) {
+      html += `<div style="font-size:0.78rem;font-weight:700;color:#92400e;margin:10px 0 6px;">⚠️ ข้อมูลไม่ครบในปีงบ (${warns.length} รายการ)</div>`;
+      warns.forEach(issue => {
+        html += `<div class="dq-issue warning">
+          <span class="dq-icon">⚠️</span>
+          <div>
+            ${issue.text}<br>
+            <span style="color:#6b7280;font-size:0.75rem;">📌 ${issue.detail}</span>
+          </div>
+        </div>`;
+      });
+    }
+
+    if (gaps.length) {
+      html += `<div style="font-size:0.78rem;font-weight:700;color:#92400e;margin:10px 0 6px;">🔶 เดือนที่ข้อมูลหายโดดเดี่ยว (อาจจงใจไม่ได้บันทึก) (${gaps.length} รายการ)</div>`;
+      gaps.forEach(issue => {
+        html += `<div class="dq-issue warning">
+          <span class="dq-icon">🔶</span>
+          <div>
+            ${issue.text}<br>
+            <span style="color:#6b7280;font-size:0.75rem;">📌 ${issue.detail}</span>
+          </div>
+        </div>`;
+      });
+    }
+  }
+
+  html += `</div>`;
+
+  // === ส่วน: ขั้นตอนแก้ไข ===
+  html += `<div class="dq-section">
+    <div class="dq-section-title">🛠️ ขั้นตอนแก้ไขข้อมูลใน Google Sheets</div>
+    <div class="dq-guide">
+      <strong>ขั้นที่ 1 — ค้นหา record ที่ปีผิด</strong><br>
+      เพิ่ม column ชั่วคราว: <code>=IF(OR(YEAR(A2)<2560, YEAR(A2)>2575), "⚠️ ปีผิด: "&YEAR(A2), "OK")</code><br>
+      กรอง "⚠️ ปีผิด" แล้ว sort ดูว่าปีที่ผิดเป็น ค.ศ. หรือ พ.ศ. ที่ไม่ตรง<br><br>
+      <strong>ขั้นที่ 2 — แก้ไขจำนวนมาก (Bulk fix)</strong><br>
+      ถ้าพบปี ค.ศ. (เช่น 2024) แทนที่จะเป็น พ.ศ. (2567):<br>
+      <code>=DATE(YEAR(A2)+543, MONTH(A2), DAY(A2))</code><br>
+      ถ้าพบปี พ.ศ. (เช่น 2567) แทนที่จะเป็น ค.ศ. (2024):<br>
+      <code>=DATE(YEAR(A2)-543, MONTH(A2), DAY(A2))</code><br><br>
+      <strong>ขั้นที่ 3 — ป้องกันในอนาคต</strong><br>
+      • ตั้ง Data Validation ใน Sheets: ปี ต้องอยู่ระหว่าง <code>2560–2580</code> (พ.ศ.) หรือ <code>2017–2037</code> (ค.ศ.)<br>
+      • ล็อครูปแบบวันที่ให้เป็น format เดียว เช่น <code>dd/mm/yyyy</code> (ค.ศ.) ตลอด<br>
+      • เพิ่ม column "ปีพ.ศ." computed: <code>=YEAR(A2)+543</code> เพื่อตรวจสอบ
+    </div>
+  </div>`;
+
+  body.innerHTML = html;
+
+  // Update badge
+  if (criticalCount > 0) {
+    badge.textContent = `⚠️ พบ ${criticalCount} ปัญหาร้ายแรง`;
+    badge.style.background = 'rgba(239,68,68,0.9)';
+  } else if (warningCount > 0) {
+    badge.textContent = `⚠️ พบ ${warningCount} รายการน่าสงสัย`;
+    badge.style.background = 'rgba(245,158,11,0.9)';
+  } else {
+    badge.textContent = '✅ ข้อมูลดูปกติ';
+    badge.style.background = 'rgba(16,185,129,0.9)';
+  }
+
+  // Auto-open if critical issues
+  if (criticalCount > 0) {
+    body.classList.add('open');
+  }
+}
+
 // ========== INIT ==========
 function safeRun(label, fn) {
   try { fn(); }
   catch(e) { console.error('[Dashboard] ' + label + ':', e.message || e); }
 }
 
+safeRun('buildDataQuality', buildDataQuality);
 safeRun('buildKPI', buildKPI);
 safeRun('mainTrendChart', mainTrendChart);
 safeRun('erOpdChart', erOpdChart);
