@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard ผลงานบริการ – เวชปฏิบัติครอบครัวและชุมชน</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  onerror="this.onerror=null;document.head.insertAdjacentHTML('beforeend','<script src=https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js><\/script>')"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; background: #f0f4f8; color: #1a202c; font-size: 14px; }
+
+  .header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%); color: white; padding: 22px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 3px 12px rgba(0,0,0,0.2); }
+  .header h1 { font-size: 1.3rem; font-weight: 700; line-height: 1.4; }
+  .header .subtitle { font-size: 0.82rem; opacity: 0.85; margin-top: 4px; }
+  .header .date-range { background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 20px; font-size: 0.82rem; text-align: right; }
+  .note-bar { background: #fff3cd; border-left: 4px solid #f59e0b; padding: 8px 16px; font-size: 0.8rem; color: #92400e; }
+  .note-bar em { font-style: normal; background: rgba(180,83,9,0.12); padding: 1px 5px; border-radius: 3px; font-weight: 600; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 16px; }
+
+  /* KPI Cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .kpi-card { background: white; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-top: 4px solid #ccc; position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; top: 0; right: 0; width: 80px; height: 80px; border-radius: 50%; opacity: 0.06; }
+  .kpi-card.blue { border-color: #3b82f6; } .kpi-card.blue::before { background: #3b82f6; }
+  .kpi-card.red { border-color: #ef4444; } .kpi-card.red::before { background: #ef4444; }
+  .kpi-card.green { border-color: #10b981; } .kpi-card.green::before { background: #10b981; }
+  .kpi-card.purple { border-color: #8b5cf6; } .kpi-card.purple::before { background: #8b5cf6; }
+  .kpi-card.orange { border-color: #f97316; } .kpi-card.orange::before { background: #f97316; }
+  .kpi-card.teal { border-color: #14b8a6; } .kpi-card.teal::before { background: #14b8a6; }
+  .kpi-label { font-size: 0.72rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-value { font-size: 1.9rem; font-weight: 800; color: #111827; line-height: 1; }
+  .kpi-month { font-size: 0.72rem; color: #9ca3af; margin-top: 3px; }
+  .kpi-trend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 0.75rem; font-weight: 600; }
+  .trend-up { color: #10b981; } .trend-down { color: #ef4444; } .trend-neutral { color: #6b7280; }
+  .kpi-avg { font-size: 0.72rem; color: #6b7280; margin-top: 2px; }
+
+  /* Charts Layout */
+  .chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 1100px) { .chart-grid-2 { grid-template-columns: 1fr; } .chart-grid-3 { grid-template-columns: 1fr; } }
+
+  .chart-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .chart-card.full { margin-bottom: 20px; }
+  .chart-title { font-size: 0.9rem; font-weight: 700; color: #1e3a5f; margin-bottom: 4px; }
+  .chart-sub { font-size: 0.75rem; color: #6b7280; margin-bottom: 14px; }
+  .chart-wrap { position: relative; }
+
+  /* Tabs for chart switching */
+  .tab-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab-btn { background: #f3f4f6; border: none; padding: 5px 12px; border-radius: 20px; font-size: 0.73rem; cursor: pointer; color: #374151; transition: all 0.2s; font-family: inherit; }
+  .tab-btn.active { background: #1e3a5f; color: white; }
+  .tab-btn:hover:not(.active) { background: #e5e7eb; }
+
+  /* Analysis */
+  .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 900px) { .analysis-grid { grid-template-columns: 1fr; } }
+  .insight-card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .insight-title { font-size: 0.88rem; font-weight: 700; color: #1e3a5f; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .insight-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.8rem; line-height: 1.5; }
+  .insight-item:last-child { border-bottom: none; }
+  .insight-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .insight-text strong { color: #1e3a5f; display: block; margin-bottom: 1px; }
+
+  /* Data Table */
+  .table-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 20px; }
+  .table-scroll-wrap { overflow-x: auto; max-height: 560px; overflow-y: auto; border-radius: 6px; }
+  .table-scroll-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
+  .table-scroll-wrap::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+  .table-scroll-wrap::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+  .table-scroll-wrap::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.78rem; }
+  .data-table th { background: #1e3a5f; color: white; padding: 9px 10px; text-align: center; font-weight: 600; white-space: nowrap; position: sticky; top: 0; z-index: 2; }
+  .data-table th:first-child { text-align: left; position: sticky; left: 0; z-index: 3; }
+  .data-table th:last-child { position: sticky; right: 0; z-index: 3; background: #2d5016; }
+  .data-table td { padding: 7px 10px; text-align: center; border-bottom: 1px solid #f0f4f8; white-space: nowrap; }
+  .data-table td:first-child { text-align: left; font-weight: 600; color: #1e3a5f; background: #f8fafc; position: sticky; left: 0; z-index: 1; box-shadow: 2px 0 4px rgba(0,0,0,0.06); }
+  .data-table td:last-child { position: sticky; right: 0; z-index: 1; box-shadow: -2px 0 4px rgba(0,0,0,0.06); }
+  .data-table tr.subrow td:first-child { background: #f8fafc; }
+  .data-table tr:hover td { background: #f0f7ff; }
+  .data-table tr:hover td:first-child { background: #e8f0fe; }
+  .data-table tr.subrow td:first-child { font-weight: 400; color: #374151; padding-left: 24px; font-size: 0.75rem; }
+  .data-table .section-header td { background: #e8f0fe; font-weight: 700; color: #1e3a5f; font-size: 0.8rem; }
+  .heat-high { background: #fee2e2 !important; color: #b91c1c; font-weight: 700; }
+  .heat-mid { background: #fef9c3 !important; color: #92400e; }
+  .heat-low { background: #dcfce7 !important; color: #166534; }
+  .note-cell { background: #fff8e1 !important; font-style: italic; font-size: 0.7rem; color: #92400e; }
+  .na-cell { color: #d1d5db; }
+
+  /* Fiscal year bands */
+  .fy-label { font-size: 0.68rem; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; margin-left: 6px; }
+  .fy2-label { font-size: 0.68rem; background: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 10px; margin-left: 6px; }
+
+  /* Footer */
+  .footer { text-align: center; font-size: 0.72rem; color: #9ca3af; padding: 16px; margin-top: 8px; }
+
+  /* Section header */
+  .section-title { font-size: 1rem; font-weight: 700; color: #1e3a5f; margin: 8px 0 14px; display: flex; align-items: center; gap: 8px; }
+  .section-title::after { content: ''; flex: 1; height: 2px; background: linear-gradient(to right, #3b82f6, transparent); }
+
+  /* Trend badge */
+  .change-pill { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
+  .change-pill.pos { background: #dcfce7; color: #166534; }
+  .change-pill.neg { background: #fee2e2; color: #b91c1c; }
+
+  /* ===== Detailed Statistics Section ===== */
+  .avail-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+  @media (max-width: 900px) { .avail-grid { grid-template-columns: 1fr 1fr; } }
+  .avail-card { border-radius: 10px; padding: 13px 15px; border-left: 4px solid #3b82f6; background: #eff6ff; }
+  .avail-card h4 { font-size: 0.83rem; color: #1e3a5f; font-weight: 700; margin-bottom: 7px; }
+  .avail-card ul { list-style: none; font-size: 0.72rem; color: #374151; }
+  .avail-card ul li { padding: 2px 0; }
+  .avail-card ul li::before { content: '✓ '; color: #10b981; font-weight: 700; }
+
+  .stats-nav { display: flex; gap: 0; border-radius: 12px 12px 0 0; overflow: hidden; border: 1px solid #d1d5db; border-bottom: none; }
+  .stats-nav-btn { flex: 1; padding: 11px 6px; background: #f9fafb; border: none; font-size: 0.82rem; cursor: pointer; font-family: inherit; color: #6b7280; border-right: 1px solid #d1d5db; transition: all 0.2s; font-weight: 600; }
+  .stats-nav-btn:last-child { border-right: none; }
+  .stats-nav-btn.active { background: #1e3a5f; color: white; }
+  .stats-nav-btn:hover:not(.active) { background: #e5e7eb; color: #1e3a5f; }
+
+  .stats-panel { display: none; background: white; border-radius: 0 0 12px 12px; border: 1px solid #d1d5db; padding: 22px; margin-bottom: 22px; }
+  .stats-panel.active { display: block; }
+
+  .stat-mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 18px; }
+  .stat-mini { background: #f8fafc; border-radius: 8px; padding: 12px; text-align: center; border: 1px solid #e5e7eb; }
+  .stat-mini-val { font-size: 1.5rem; font-weight: 800; color: #1e3a5f; line-height: 1; }
+  .stat-mini-label { font-size: 0.68rem; color: #6b7280; margin-top: 3px; font-weight: 600; }
+  .stat-mini-sub { font-size: 0.65rem; color: #9ca3af; margin-top: 1px; }
+
+  .s-table { width:100%; border-collapse:collapse; font-size:0.77rem; margin-top:12px; }
+  .s-table th { background:#1e3a5f; color:white; padding:8px 10px; text-align:center; font-weight:600; white-space:nowrap; }
+  .s-table th:first-child { text-align:left; }
+  .s-table td { padding:7px 10px; text-align:center; border-bottom:1px solid #f0f4f8; white-space:nowrap; }
+  .s-table td:first-child { text-align:left; font-weight:600; color:#374151; }
+  .s-table tr:hover td { background:#f0f7ff; }
+  .s-table .s-best td { background:#dcfce7; color:#166534; font-weight:700; }
+  .s-table .s-worst td { background:#fee2e2; color:#b91c1c; font-weight:700; }
+  .s-table .s-total td { background:#eff6ff; font-weight:700; color:#1e40af; }
+  .s-table .s-sub td:first-child { padding-left:22px; font-weight:400; color:#6b7280; font-size:0.72rem; }
+  .cell-best { color:#166534!important; font-weight:700; }
+  .cell-worst { color:#b91c1c!important; font-weight:700; }
+
+  .finding-box { background:#fefce8; border-left:4px solid #f59e0b; border-radius:0 8px 8px 0; padding:12px 16px; margin-top:14px; font-size:0.78rem; color:#78350f; }
+  .finding-box strong { color:#92400e; display:block; margin-bottom:4px; }
+  .finding-box ul { list-style:none; }
+  .finding-box ul li { padding:3px 0; }
+  .finding-box ul li::before { content:'💡 '; }
+
+  .two-col-stats { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media (max-width:900px) { .two-col-stats { grid-template-columns:1fr; } }
+  .stats-chart-wrap { position:relative; }
+
+  /* ===== Forecast Section ===== */
+  .wd-badge { display:inline-block; background:#ecfdf5; color:#065f46; border:1px solid #6ee7b7; border-radius:4px; padding:1px 6px; font-size:0.68rem; font-weight:700; margin-left:4px; }
+  .forecast-panel { display:none; background:white; border-radius:0 0 12px 12px; border:1px solid #d1d5db; padding:22px; margin-bottom:22px; }
+  .forecast-panel.active { display:block; }
+  .forecast-note { background:#fef3c7; border-left:4px solid #f59e0b; border-radius:0 8px 8px 0; padding:10px 14px; font-size:0.75rem; color:#78350f; margin-bottom:14px; }
+  .forecast-note strong { color:#92400e; }
+  .forecast-kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:16px; }
+  .forecast-kpi { background:#f8fafc; border-radius:8px; padding:12px; text-align:center; border:2px solid #e5e7eb; }
+  .forecast-kpi.highlight { border-color:#f97316; background:#fff7ed; }
+  .forecast-kpi-val { font-size:1.4rem; font-weight:800; color:#1e3a5f; }
+  .forecast-kpi-label { font-size:0.68rem; color:#6b7280; margin-top:2px; font-weight:600; }
+  .pct-badge { display:inline-flex; align-items:center; background:#dbeafe; color:#1e40af; border-radius:10px; padding:2px 7px; font-size:0.68rem; font-weight:700; margin-left:4px; }
+  .pct-badge.red { background:#fee2e2; color:#b91c1c; }
+  .pct-badge.green { background:#dcfce7; color:#166534; }
+
+  /* ===== Premium Design Enhancements ===== */
+  * { box-sizing:border-box; }
+  body { font-family:'Segoe UI','Noto Sans Thai','Helvetica Neue',Arial,sans-serif; background:#eef2f7; }
+  .header { background:linear-gradient(135deg,#0f2444 0%,#1e3a5f 45%,#2d6a9f 100%); box-shadow:0 4px 20px rgba(0,0,0,0.25); padding:24px 32px; }
+  .header h1 { font-size:1.35rem; letter-spacing:-0.3px; }
+  .container { max-width:1440px; }
+  .chart-card { border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,0.08); border:1px solid rgba(255,255,255,0.8); transition:box-shadow 0.2s; position:relative; }
+  .chart-card:hover { box-shadow:0 6px 24px rgba(0,0,0,0.12); }
+  .kpi-card { border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
+  .insight-card { border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
+  .table-card { border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
+  .stats-panel { box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+  .section-title { font-size:1.05rem; letter-spacing:-0.2px; }
+
+  /* Chart action buttons overlay */
+  .chart-actions { position:absolute; top:10px; right:10px; display:flex; gap:4px; opacity:0; transition:opacity 0.2s; z-index:10; }
+  .chart-card:hover .chart-actions { opacity:1; }
+  .chart-action-btn { background:rgba(255,255,255,0.92); border:1px solid #d1d5db; border-radius:6px; padding:3px 8px; font-size:0.7rem; cursor:pointer; color:#374151; transition:all 0.15s; backdrop-filter:blur(4px); line-height:1.4; }
+  .chart-action-btn:hover { background:#1e3a5f; color:white; border-color:#1e3a5f; }
+  .chart-action-btn.download { color:#059669; border-color:#6ee7b7; }
+  .chart-action-btn.download:hover { background:#059669; color:white; }
+
+  /* Mean/Median toggle */
+  .stat-toggle { display:inline-flex; border:1.5px solid #d1d5db; border-radius:20px; overflow:hidden; margin-left:8px; }
+  .stat-toggle-btn { padding:3px 10px; font-size:0.72rem; border:none; background:transparent; cursor:pointer; font-family:inherit; color:#6b7280; font-weight:600; }
+  .stat-toggle-btn.active { background:#1e3a5f; color:white; }
+
+  /* Chart Modal */
+  .chart-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; }
+  .chart-modal-overlay.open { display:flex; }
+  .chart-modal-content { background:white; border-radius:18px; width:min(92vw,1100px); height:min(88vh,700px); display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+  .chart-modal-hdr { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #f0f4f8; background:#f8fafc; flex-shrink:0; }
+  .modal-btn { border:none; border-radius:8px; padding:6px 14px; font-size:0.78rem; cursor:pointer; font-weight:600; font-family:inherit; }
+  .modal-btn { background:#eff6ff; color:#1e40af; }
+  .modal-btn:hover { background:#dbeafe; }
+  .modal-btn-close { background:#fee2e2; color:#b91c1c; }
+  .modal-btn-close:hover { background:#fecaca; }
+
+  /* Floating PDF button */
+  #pdfBtn { position:fixed; bottom:24px; right:24px; z-index:1000; background:linear-gradient(135deg,#1e3a5f,#2d6a9f); color:white; border:none; border-radius:50px; padding:12px 20px; font-size:0.82rem; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(30,58,95,0.4); font-family:inherit; transition:all 0.2s; letter-spacing:0.3px; }
+  #pdfBtn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(30,58,95,0.5); }
+
+  /* Print styles */
+  @media print {
+    #pdfBtn, .chart-actions, .tab-bar, .stats-nav, #forecastNavBar { display:none!important; }
+    .chart-card, .kpi-card, .insight-card, .table-card, .stats-panel { break-inside:avoid; box-shadow:none; border:1px solid #e5e7eb; }
+    body { background:white; }
+    .stats-panel { display:block!important; }
+    .forecast-panel { display:block!important; }
+    .container { max-width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header h1">📊 Dashboard ผลงานบริการงานเวชปฏิบัติครอบครัวและชุมชน</div>
+    <div class="subtitle">โรงพยาบาลสระบุรี 2</div>
+  </div>
+  <div class="date-range">
+    <div>ข้อมูลตั้งแต่ <strong>ตุลาคม 2565 – เมษายน 2569</strong></div>
+    <div style="margin-top:4px">รวม 44 เดือน (4 ปีงบ) | อัปเดต: 5 พฤษภาคม 2569</div>
+  </div>
+</div>
+<div class="note-bar">
+  ⚠️ <strong>หมายเหตุ:</strong> มีการเปลี่ยนรูปแบบบันทึก 2 ครั้ง (แสดงเส้นประสีน้ำตาลในกราฟ): <strong>(1) ก่อน กค.68</strong> = ระบบเดิม นับ OPD ทุก encounter รวมถึง walk-in/refill/วัคซีน ยอดรวม ~7,000–9,000/เดือน; <strong>(2) ตั้งแต่ สค.68</strong> = ระบบใหม่ นิยาม OPD แคบลง ยอดรวม ~5,000–6,000/เดือน แต่ ER บันทึกครบถ้วนมากขึ้น → <em>ไม่ควรเปรียบ YoY ข้ามช่วงนี้โดยตรง</em> · ยอดฉีดยาสูงผิดปกติ พย.65–มีค.66 เนื่องจากโครงการวัคซีน COVID-19 · พ.ค.69* = ข้อมูลบางส่วน (5 วัน)
+</div>
+
+<!-- Chart Modal Overlay -->
+<div id="chartModal" class="chart-modal-overlay" onclick="if(event.target===this)closeChartModal()">
+  <div class="chart-modal-content">
+    <div class="chart-modal-hdr">
+      <span id="modalChartTitle" style="font-weight:700;font-size:1rem;color:#1e3a5f"></span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="modal-btn" id="modalDownloadBtn" onclick="downloadModalChart()">⬇ PNG</button>
+        <button class="modal-btn modal-btn-close" onclick="closeChartModal()">✕ ปิด</button>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:10px">
+      <img id="modalChartImg" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px" src="" alt="chart" />
+    </div>
+  </div>
+</div>
+<!-- PDF Download Floating Button -->
+<button id="pdfBtn" onclick="downloadPDF()" title="ดาวน์โหลด PDF ทั้งหน้า">📄 PDF</button>
+
+<div class="container">
+
+<!-- KPI Cards -->
+<div class="section-title">📌 ตัวชี้วัดหลัก (เดือนล่าสุด: เมษายน 2569 | ข้อมูลรวม 4 ปีงบ: 2566–2569)</div>
+<div class="kpi-grid" id="kpiGrid"></div>
+
+<!-- Main Trend Chart -->
+<div class="chart-card full">
+  <div class="chart-title">📈 แนวโน้มยอดบริการรวมรายเดือน (18 เดือน)</div>
+  <div class="chart-sub">ยอดผู้รับบริการทั้งหมด | เส้น Moving Average 3 เดือน | ● เปลี่ยนระบบบันทึก ก.ค.68</div>
+  <div class="chart-wrap" style="height:280px"><canvas id="mainTrendChart"></canvas></div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="section-title">🏥 วิเคราะห์ภาระงานตามประเภทบริการ</div>
+<div class="chart-grid-2">
+  <div class="chart-card">
+    <div class="chart-title">ER vs OPD รายเดือน</div>
+    <div class="chart-sub">เปรียบเทียบสัดส่วน ER กับ OPD ที่นัด/Walk-in</div>
+    <div class="chart-wrap" style="height:240px"><canvas id="erOpdChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">แนวโน้มภาระงาน ER</div>
+    <div class="chart-sub">จำนวน ER รายเดือน และ % ต่อยอดรวม</div>
+    <div class="chart-wrap" style="height:240px"><canvas id="erTrendChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="chart-grid-2">
+  <div class="chart-card">
+    <div class="chart-title">ภาระงานการฉีดยาและหัตถการ</div>
+    <div class="chart-sub">ฉีดยา | IV/Drip | ทำแผล | เย็บแผล</div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showProcChart('inj')">ฉีดยา+IV</button>
+      <button class="tab-btn" onclick="showProcChart('wound')">ทำแผล</button>
+      <button class="tab-btn" onclick="showProcChart('diag')">การตรวจ</button>
+    </div>
+    <div class="chart-wrap" style="height:210px"><canvas id="procChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Well Child Clinic (WCC)</div>
+    <div class="chart-sub">จำนวนนัด vs มาจริง | อัตรามาตามนัด (%)</div>
+    <div style="overflow-x:auto;padding-bottom:4px">
+      <div style="min-width:600px;height:260px;position:relative"><canvas id="appointmentChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 3 -->
+<div class="chart-grid-3">
+  <div class="chart-card">
+    <div class="chart-title">ตรวจโดยพยาบาลเวชฯ (NP)</div>
+    <div class="chart-sub">จำนวนการตรวจ & NP Rate %</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="npChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">ผู้ป่วยสังเกตอาการ (Observe)</div>
+    <div class="chart-sub">ส่ง ER | ตาม 1669 | Observe</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="observeChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">ยอดบริการรายปีงบประมาณ</div>
+    <div class="chart-sub">เปรียบเทียบ ปีงบ 2568 vs 2569 (ต.ค.-ก.ย.)</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="fyChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Analysis Section -->
+<div class="section-title">🔍 วิเคราะห์แนวโน้มและข้อสังเกต</div>
+<div class="analysis-grid">
+  <div class="insight-card">
+    <div class="insight-title">📊 แนวโน้มภาระงานสำคัญ</div>
+    <div class="insight-item">
+      <span class="insight-icon">📈</span>
+      <span><strong>ER เพิ่มขึ้นอย่างมีนัยสำคัญ</strong>จาก ~500-700 ครั้ง/เดือน (ปีงบ 2567) เป็น ~1,300-1,600 ครั้ง/เดือน (ปีงบ 2568-2569) เพิ่มขึ้น 2-3 เท่า สะท้อนภาระงานฉุกเฉินที่สูงขึ้นชัดเจน</span>
+    </div>
+    <div class="insight-item">
+      <span class="insight-icon">📅</span>
+      <span><strong>นัดหมายปฐมภูมิเพิ่มต่อเนื่อง</strong>จาก 860 นัด/เดือน (พ.ย.67) เป็น 2,580 นัด/เดือน (ต.ค.68) หรือ +200% สะท้อนระบบนัดที่พัฒนาขึ้นและผู้ป่วยโรคเรื้อรังที่เพิ่มขึ้น</span>
+    </div>
+    <div class="insight-item">
+      <span class="insight-icon">⬆️</span>
+      <span><strong>Peak volume</strong>คือ พ.ค.68 (9,027 ราย) และ มิ.ย.68 (8,953 ราย) ควรเตรียมอัตรากำลังเสริมในช่วงเดือน เม.ย.–มิ.ย. ของทุกปี</span>
+    </div>
+    <div class="insight-item">
+      <span class="insight-icon">⬇️</span>
+      <span><strong>ยอดรวมลดลงตั้งแต่ ส.ค.68</strong>อาจเกิดจากการปรับระบบบันทึก แต่ยอด ER ยังคงสูง สะท้อนว่า Complexity ของงานเพิ่มขึ้น ไม่ใช่งานลดลง</span>
+    </div>
+    <div class="insight-item">
+      <span class="insight-icon">📉</span>
+      <span><strong>ธ.ค.67 เป็น Low season</strong>(6,597 ราย) ต่ำสุดในช่วง ต.ค.67–มิ.ย.68 เนื่องจากวันหยุดยาว สอดคล้องกับปีงบ 2566 เช่นกัน</span>
+    </div>
+  </div>
+
+  <div class="insight-card">
+    <div class="insight-title">👥 ข้อเสนอแนะด้านอัตรากำลัง</div>
+    <div class="insight-item">
+      <span class="insight-icon">🔴</span>
+      <span><strong>ภาระ ER สูง: ควรเพิ่มกำลัง</strong>ยอด ER เพิ่มขึ้น 3 เท่า ตั้งแต่ ส.ค.68 ต้องการพยาบาล/เจ้าหน้าที่ ER เพิ่มอย่างน้อย 1-2 คน หรือปรับ shift ER ให้รองรับได้มากขึ้น</span>
+    </div>
+    <div class="insight-item">
+      <span class="insight-icon">🟡</span>
+      <span><strong>ช่วงงานหนัก เม.ย.–มิ.ย.</strong>ยอดบริการสูงสุด 8,000–9,000 ราย/เดือน ควรพิจารณาจ้างพนักงานชั่วคราว หรือขอสนับสนุนจากต้นสังกัดในช่วงนี้</span>
+    </div>
+    <div class="insight-item">
+      <span class="insight-icon">🟢</span>
+      <span><strong>NP Workload เหมาะสม</strong>การตรวจโดยพยาบาลเวชฯ อยู่ที่ 60-135 ครั้ง/เดือน สัดส่วน ~1-2% ของยอดรวม มีศักยภาพเพิ่มได้ถ้ามีการสนับสนุนโปรแกรม</span>
+    </div>
+    <div class="insight-item">
+      <span class="insight-icon">📋</span>
+      <span><strong>ระบบนัด OPD ขยายตัว</strong>ยอดนัดเพิ่มจาก 860 → 2,580 ต้องการระบบคิว/จัดการนัดที่แข็งแกร่งขึ้น และเจ้าหน้าที่ซักประวัติที่เพียงพอ</span>
+    </div>
+    <div class="insight-item">
+      <span class="insight-icon">💡</span>
+      <span><strong>แนะนำติดตาม</strong>อัตราการส่ง ER (Refer) และ 1669 อย่างใกล้ชิด เพราะสะท้อน Severity ของผู้ป่วยและความจำเป็นในการขยายทรัพยากรฉุกเฉิน</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DETAILED STATISTICS SECTION ===== -->
+<div class="section-title">📐 สถิติเชิงลึก แยกตามช่วงเวลา</div>
+
+<!-- Available Stats Overview -->
+<div class="avail-grid" style="margin-bottom:14px">
+  <div class="avail-card" style="border-color:#3b82f6;background:#eff6ff">
+    <h4>📅 รายวัน (Working Day)</h4>
+    <ul>
+      <li>เฉลี่ยผู้รับบริการต่อวันทำการ</li>
+      <li>สัดส่วนผู้ป่วยนัด vs Walk-in (%)</li>
+      <li>การกระจายตามวันในสัปดาห์ จ–ศ</li>
+      <li>ค่าเบี่ยงเบนมาตรฐาน (SD) รายวัน</li>
+    </ul>
+  </div>
+  <div class="avail-card" style="border-color:#10b981;background:#f0fdf4">
+    <h4>📆 รายเดือน (Monthly)</h4>
+    <ul>
+      <li>ค่า Min / Max / Mean / SD / CV%</li>
+      <li>เฉลี่ยต่อวันทำการ (~20 วัน/เดือน)</li>
+      <li>เดือนที่สูงสุดและต่ำสุด</li>
+      <li>แนวโน้ม Month-over-Month</li>
+    </ul>
+  </div>
+  <div class="avail-card" style="border-color:#8b5cf6;background:#faf5ff">
+    <h4>📊 รายไตรมาส (Quarterly)</h4>
+    <ul>
+      <li>ยอดรวม Q1–Q4 แต่ละปีงบ</li>
+      <li>% ER ต่อยอดรวมรายไตรมาส</li>
+      <li>เปรียบเทียบ Q เดียวกันข้ามปีงบ</li>
+      <li>ไตรมาสที่มีภาระงานสูงสุด</li>
+    </ul>
+  </div>
+  <div class="avail-card" style="border-color:#f97316;background:#fff7ed">
+    <h4>📈 รายปีงบ (Annual)</h4>
+    <ul>
+      <li>ยอดรวมปีงบ 2568 (สมบูรณ์)</li>
+      <li>ยอดสะสม + ฉายภาพ ปีงบ 2569</li>
+      <li>อัตราการเติบโต YoY (%)</li>
+      <li>เปรียบเทียบตัวชี้วัดสำคัญ</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Tab Nav -->
+<div class="stats-nav">
+  <button class="stats-nav-btn active" onclick="switchStatsTab(this,'tabDaily')">📅 รายวัน</button>
+  <button class="stats-nav-btn" onclick="switchStatsTab(this,'tabMonthly')">📆 รายเดือน</button>
+  <button class="stats-nav-btn" onclick="switchStatsTab(this,'tabQuarterly')">📊 รายไตรมาส</button>
+  <button class="stats-nav-btn" onclick="switchStatsTab(this,'tabAnnual')">📈 รายปีงบ</button>
+</div>
+
+<!-- TAB: Daily -->
+<div id="tabDaily" class="stats-panel active">
+  <div class="stat-mini-grid" id="dailyKPI"></div>
+  <div class="two-col-stats">
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">เฉลี่ยผู้รับบริการต่อวัน แยกตามวันในสัปดาห์</div>
+      <div class="stats-chart-wrap" style="height:220px"><canvas id="dowBarChart"></canvas></div>
+    </div>
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">สัดส่วนผู้ป่วยนัด vs Walk-in (ช่วง ก.ค.68–เม.ย.69)</div>
+      <div class="stats-chart-wrap" style="height:220px"><canvas id="dowApptChart"></canvas></div>
+    </div>
+  </div>
+  <table class="s-table" id="dowTable"></table>
+  <div class="finding-box">
+    <strong>🔍 ผลการวิเคราะห์รายวันที่สำคัญ (322 วันทำการ, ตค.67–กพ.69)</strong>
+    <ul>
+      <li>วันพฤหัสบดีมีภาระงานสูงที่สุด เฉลี่ย 325 คน/วัน และคิดเป็น 23.4% ของภาระงานทั้งสัปดาห์</li>
+      <li>วันพุธมีผู้รับบริการน้อยที่สุด เฉลี่ย 258 คน/วัน (18.3% ของสัปดาห์) เหมาะสำหรับจัดประชุม/อบรมภายใน</li>
+      <li>สัดส่วนผู้ป่วยนัดอยู่ที่ 39–44% ทุกวัน โดยวันพุธมี %นัดสูงสุด (43.6%) และวันศุกร์ต่ำสุด (38.9%)</li>
+      <li>ช่วง ตค.67–มิย.68 มีเฉลี่ย/วัน สูงกว่า (380–433) เพราะนับรวมผู้ป่วยทุกประเภทในระบบเดิม</li>
+      <li>ค่า SD วันศุกร์ (Period 1: 114) สูงกว่าวันอื่นมาก บ่งชี้ความผันผวนสูงในวันนั้น</li>
+    </ul>
+  </div>
+</div>
+
+<!-- TAB: Monthly -->
+<div id="tabMonthly" class="stats-panel">
+  <div class="stat-mini-grid" id="monthlyKPI"></div>
+  <div class="two-col-stats">
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">การกระจายตัวของยอดบริการรายเดือน (Box-style)</div>
+      <div class="stats-chart-wrap" style="height:220px"><canvas id="monthlyDistChart"></canvas></div>
+    </div>
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">เฉลี่ยต่อวันทำการ รายเดือน (ประมาณ 20 วัน/เดือน)</div>
+      <div class="stats-chart-wrap" style="height:220px"><canvas id="perDayChart"></canvas></div>
+    </div>
+  </div>
+  <table class="s-table" id="monthlyStatsTable"></table>
+  <div class="finding-box">
+    <strong>🔍 ผลการวิเคราะห์รายเดือนที่สำคัญ</strong>
+    <ul>
+      <li>ค่าเฉลี่ยยอดบริการรวม 6,747 ราย/เดือน (19 เดือนเต็ม ส.ค.67–เม.ย.69) ด้วย SD = 1,246 และ CV = 18.5% — ความผันผวนปานกลาง</li>
+      <li>เดือน พ.ค.68 มียอดสูงสุด 9,027 ราย สูงกว่าค่าเฉลี่ย +31% ควรวางแผนกำลังเสริมล่วงหน้า</li>
+      <li>ER มีแนวโน้มเพิ่มขึ้นชัดเจน จาก CV = 43% แสดงความผันผวนสูง ต้องเฝ้าระวังต่อเนื่อง</li>
+      <li>เฉลี่ยต่อวันทำการ ~345 ราย/วัน (ปีงบ 2568) และ ~288 ราย/วัน (ปีงบ 2569 ระบบใหม่)</li>
+      <li>ยอดนัดปฐมภูมิเพิ่มจาก 860 → 2,580 ต่อเดือน (+200% ใน 12 เดือน) สะท้อนระบบดูแลโรคเรื้อรังที่เข้มแข็งขึ้น</li>
+    </ul>
+  </div>
+</div>
+
+<!-- TAB: Quarterly -->
+<div id="tabQuarterly" class="stats-panel">
+  <div class="stat-mini-grid" id="qtrKPI"></div>
+  <div class="two-col-stats">
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">ยอดบริการรวมรายไตรมาส (ปีงบ 2568 vs 2569)</div>
+      <div class="stats-chart-wrap" style="height:220px"><canvas id="qtrTotalChart"></canvas></div>
+    </div>
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">% ER ต่อยอดรวมรายไตรมาส</div>
+      <div class="stats-chart-wrap" style="height:220px"><canvas id="qtrErPctChart"></canvas></div>
+    </div>
+  </div>
+  <table class="s-table" id="qtrTable"></table>
+  <div class="finding-box">
+    <strong>🔍 ผลการวิเคราะห์รายไตรมาสที่สำคัญ</strong>
+    <ul>
+      <li>Q3 ปีงบ 2568 (เม.ย.–มิ.ย.68) เป็น Peak Quarter: 25,206 ราย เฉลี่ย 8,402/เดือน สูงกว่า Q1 ถึง +13%</li>
+      <li>Q1 ปีงบ 2569 (ต.ค.–ธ.ค.68) มี %ER = 24.5% สูงกว่า Q1 ปีงบ 2568 (%ER = 8.6%) ถึง 2.9 เท่า</li>
+      <li>Q4 ปีงบ 2568 (ก.ค.–ก.ย.68) ยอดรวมลดลงชัดเจน อาจเกิดจากการเปลี่ยนระบบบันทึก กค.68</li>
+      <li>เปรียบเทียบ Q1 FY68 vs Q1 FY69: ยอดรวมลดลง -19.3% แต่ ER เพิ่ม +132% สะท้อน Case mix ที่หนักขึ้น</li>
+      <li>ยอดนัด Q2 FY69 (ม.ค.–มี.ค.69) คาดการณ์สูงกว่า Q2 FY68 เนื่องจากระบบนัดขยายตัว</li>
+    </ul>
+  </div>
+</div>
+
+<!-- TAB: Annual -->
+<div id="tabAnnual" class="stats-panel">
+  <div class="stat-mini-grid" id="annualKPI"></div>
+  <div class="two-col-stats">
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">เปรียบเทียบตัวชี้วัดหลัก ปีงบ 2568 vs 2569 (ฉายภาพ)</div>
+      <div class="stats-chart-wrap" style="height:220px"><canvas id="annualCompChart"></canvas></div>
+    </div>
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">แนวโน้มรายปีงบ: ยอดนัด, ER, OPD</div>
+      <div class="stats-chart-wrap" style="height:220px"><canvas id="annualTrendChart"></canvas></div>
+    </div>
+  </div>
+  <table class="s-table" id="annualTable"></table>
+  <div class="finding-box">
+    <strong>🔍 ผลการวิเคราะห์รายปีงบประมาณที่สำคัญ</strong>
+    <ul>
+      <li>ปีงบ 2568 (สมบูรณ์): ยอดบริการรวม 89,031 ราย เฉลี่ย 7,419/เดือน ER = 7,695 ราย (8.6% ของยอดรวม)</li>
+      <li>ปีงบ 2569 (7 เดือน ต.ค.68–เม.ย.69): ยอดสะสม 39,272 ราย ER = 9,698 ราย (%ER = 24.7%) สูงมาก</li>
+      <li>ฉายภาพ ปีงบ 2569 ทั้งปี: ~66,000 ราย (ลดลงจาก FY68 เนื่องจากปรับระบบบันทึก OPD) แต่ ER คาดประมาณ 16,600 ราย (+116% YoY)</li>
+      <li>ยอดนัดปฐมภูมิ FY68 = 20,166 ราย → FY69 คาดการณ์ ~28,700 ราย (+42%) ต้องการระบบคิวที่แข็งแกร่งขึ้น</li>
+      <li>อัตราการเติบโต ER สูงมากในระดับที่ต้องพิจารณาเพิ่มอัตรากำลังด้านฉุกเฉินเป็นลำดับแรก</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== FORECASTING & TRENDS SECTION ===== -->
+<div class="section-title">📈 การพยากรณ์และแนวโน้ม (Forecasting & Trends)</div>
+<div class="avail-grid" style="margin-bottom:14px">
+  <div class="avail-card" style="border-color:#f97316;background:#fff7ed">
+    <h4>🔮 พยากรณ์ยอดผู้ป่วย</h4>
+    <ul>
+      <li>Moving Average 3 และ 6 เดือน</li>
+      <li>Holt Exponential Smoothing (Trend)</li>
+      <li>พยากรณ์ล่วงหน้า 6 เดือน</li>
+    </ul>
+  </div>
+  <div class="avail-card" style="border-color:#8b5cf6;background:#faf5ff">
+    <h4>🌤️ Seasonal Pattern</h4>
+    <ul>
+      <li>Seasonal Index รายเดือนในปีงบ</li>
+      <li>Peak & Trough season ที่มีนัยสำคัญ</li>
+      <li>เปรียบเทียบ FY66/67/68</li>
+    </ul>
+  </div>
+  <div class="avail-card" style="border-color:#10b981;background:#f0fdf4">
+    <h4>📊 Year-over-Year Growth</h4>
+    <ul>
+      <li>อัตราการเติบโต FY67 vs FY66</li>
+      <li>อัตราการเติบโต FY68 vs FY67</li>
+      <li>ER Growth Rate แยกตามเดือน</li>
+    </ul>
+  </div>
+  <div class="avail-card" style="border-color:#3b82f6;background:#eff6ff">
+    <h4>📅 วันทำการต่อเดือน</h4>
+    <ul>
+      <li>วันราชการจริง (หักวันหยุดไทย)</li>
+      <li>สถิติเทียบต่อวันทำการ</li>
+      <li>ควรอัพเดทเมื่อมีข้อมูลใหม่</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Forecast Tab Nav -->
+<div class="stats-nav" id="forecastNavBar">
+  <button class="stats-nav-btn active" onclick="switchForecastTab(this,'tabForecast')">🔮 พยากรณ์ยอดผู้ป่วย</button>
+  <button class="stats-nav-btn" onclick="switchForecastTab(this,'tabSeasonal')">🌤️ Seasonal Pattern</button>
+  <button class="stats-nav-btn" onclick="switchForecastTab(this,'tabYoY')">📊 Year-over-Year Growth</button>
+  <button class="stats-nav-btn" onclick="switchForecastTab(this,'tabWorkingDay')">📅 วันทำการ</button>
+</div>
+
+<!-- TAB: Forecast -->
+<div id="tabForecast" class="forecast-panel active">
+  <div class="forecast-note">
+    ⚠️ <strong>หมายเหตุ:</strong> ใช้ข้อมูล 9 เดือน (ส.ค.68–เม.ย.69) จากระบบบันทึกใหม่เท่านั้น · พยากรณ์ไม่รวม Seasonal Adjustment · ควรทบทวนทุกสัปดาห์เมื่อมีข้อมูลเพิ่ม
+  </div>
+  <div class="forecast-kpi-grid" id="forecastKPI"></div>
+  <div class="two-col-stats">
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">พยากรณ์ยอดผู้ป่วย 6 เดือนข้างหน้า (3 โมเดล)</div>
+      <div class="stats-chart-wrap" style="height:260px"><canvas id="forecastChart"></canvas></div>
+    </div>
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">ER คาดการณ์ vs ยอดรวมคาดการณ์ (Holt ES)</div>
+      <div class="stats-chart-wrap" style="height:260px"><canvas id="forecastERChart"></canvas></div>
+    </div>
+  </div>
+  <table class="s-table" id="forecastTable"></table>
+  <div class="finding-box" id="forecastNarrative"></div>
+</div>
+
+<!-- TAB: Seasonal -->
+<div id="tabSeasonal" class="forecast-panel">
+  <div class="forecast-note">
+    📌 <strong>Seasonal Index:</strong> ค่า >100% = เดือนที่มีภาระงานสูงกว่าค่าเฉลี่ย / ค่า &lt;100% = ต่ำกว่า · อ้างอิง FY67 (ระบบเดิม ครบ 12 เดือน)
+  </div>
+  <div class="stat-mini-grid" id="seasonalKPI"></div>
+  <div class="two-col-stats">
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">ยอดบริการแยกตามเดือนในปีงบ (FY66, FY67, FY68)</div>
+      <div class="stats-chart-wrap" style="height:240px"><canvas id="seasonalChart"></canvas></div>
+    </div>
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">Seasonal Index (%) — เทียบค่าเฉลี่ยปี FY67</div>
+      <div class="stats-chart-wrap" style="height:240px"><canvas id="seasonalIndexChart"></canvas></div>
+    </div>
+  </div>
+  <table class="s-table" id="seasonalTable"></table>
+  <div class="finding-box" id="seasonalNarrative"></div>
+</div>
+
+<!-- TAB: YoY Growth -->
+<div id="tabYoY" class="forecast-panel">
+  <div class="forecast-note">
+    ⚠️ <strong>ข้อควรระวัง:</strong> ระบบบันทึกเปลี่ยน ก.ค.68 — ไม่ควรเปรียบ FY68 vs FY67 ในเดือน ก.ค.–ก.ย. โดยตรง (แรเงาไว้ในตาราง) · ER เปรียบได้ทุกช่วงเพราะนิยามคงที่
+  </div>
+  <div class="stat-mini-grid" id="yoyKPI"></div>
+  <div class="two-col-stats">
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">การเติบโตยอดรวม YoY (%) แยกตามเดือนปีงบ</div>
+      <div class="stats-chart-wrap" style="height:240px"><canvas id="yoyChart"></canvas></div>
+    </div>
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">การเติบโต ER YoY (%) แยกตามเดือนปีงบ</div>
+      <div class="stats-chart-wrap" style="height:240px"><canvas id="yoyERChart"></canvas></div>
+    </div>
+  </div>
+  <table class="s-table" id="yoyTable"></table>
+  <div class="finding-box" id="yoyNarrative"></div>
+</div>
+
+<!-- TAB: Working Day Analysis -->
+<div id="tabWorkingDay" class="forecast-panel">
+  <div class="forecast-note">
+    📅 <strong>วันทำการ:</strong> นับวันจันทร์–ศุกร์ หักวันหยุดราชการไทย (ประมาณการณ์ ±1 วัน) · สถิติ "ต่อวันทำการ" สะท้อนภาระงานจริงดีกว่าค่าเฉลี่ยต่อเดือน
+  </div>
+  <div class="stat-mini-grid" id="wdKPI"></div>
+  <div class="two-col-stats">
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">วันทำการต่อเดือน + ยอดบริการต่อวันทำการ</div>
+      <div class="stats-chart-wrap" style="height:240px"><canvas id="wdChart"></canvas></div>
+    </div>
+    <div>
+      <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">ยอดบริการต่อวันทำการ (ระบบใหม่ ส.ค.68–เม.ย.69)</div>
+      <div class="stats-chart-wrap" style="height:240px"><canvas id="wdPerDayNewChart"></canvas></div>
+    </div>
+  </div>
+  <table class="s-table" id="wdTable"></table>
+  <div class="finding-box" id="wdNarrative"></div>
+</div>
+
+<!-- Data Table -->
+<div class="section-title">📋 ตารางข้อมูลรายละเอียดแยกตามประเภทบริการ</div>
+<div class="table-card">
+  <div class="table-scroll-wrap">
+    <table class="data-table" id="mainTable"></table>
+  </div>
+</div>
+
+</div><!-- end container -->
+
+<div class="footer">สร้างโดย Claude AI · ข้อมูลจาก Google Sheets "บันทึกER_20221208" · โรงพยาบาลสระบุรี 2 · พฤษภาคม 2569</div>
+
+<script>
+// ========== DATA ==========
+// FY2566=idx0-11 | FY2567=idx12-23 | FY2568=idx24-35 | FY2569=idx36-43(partial@43)
+const MONTHS = [
+  'ต.ค.65','พ.ย.65','ธ.ค.65','ม.ค.66','ก.พ.66','มี.ค.66','เม.ย.66','พ.ค.66','มิ.ย.66','ก.ค.66','ส.ค.66','ก.ย.66',
+  'ต.ค.66','พ.ย.66','ธ.ค.66','ม.ค.67','ก.พ.67','มี.ค.67','เม.ย.67','พ.ค.67','มิ.ย.67','ก.ค.67','ส.ค.67','ก.ย.67',
+  'ต.ค.67','พ.ย.67','ธ.ค.67','ม.ค.68','ก.พ.68','มี.ค.68','เม.ย.68','พ.ค.68','มิ.ย.68','ก.ค.68','ส.ค.68','ก.ย.68',
+  'ต.ค.68','พ.ย.68','ธ.ค.68','ม.ค.69','ก.พ.69','มี.ค.69','เม.ย.69','พ.ค.69*'
+];
+const DATA = {
+  // FY2566(0-11) | FY2567(12-23) | FY2568(24-35) | FY2569(36-43): ต.ค.68–เม.ย.69 สมบูรณ์, พ.ค.69* บางส่วน
+  totalVisits:  [3248,4264,4371,4063,3877,4479,3220,4733,4573,4265,3678,3780, 3907,4258,3658,4143,3989,4136,3743,4365,4257,3987,3122,5932, 7786,7878,6597,7499,6996,8051,7226,9027,8953,7728,5326,5844, 5941,5827,6192,5342,5057,6062,4851,638],
+  erTotal:      [599,1105,1362,899,833,968,636,1154,1006,837,803,744, 735,803,648,800,822,751,711,768,809,864,767,1479, 746,656,507,600,490,663,502,527,603,636,1233,1532, 1611,1428,1394,1451,1294,1375,1145,133],
+  erMorning:    [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 1039,963,999,979,828,925,782,89],
+  erAfternoon:  [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 572,465,395,472,466,450,363,44],
+  opdTotal:     [2649,3159,3009,3164,3044,3511,2584,3579,3567,3428,2875,3036, 3172,3455,3010,3343,3167,3385,3032,3597,3448,3123,2355,4453, 7040,7222,6090,6899,6506,7388,6724,8500,8350,7092,4093,4312, 4330,4399,4798,3891,3763,4687,3706,505],
+  scheduled:    [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,860,1660,1756,1791,1659,2102,1877,1966,1997,2254,2280, 2580,2544,2483,2218,2046,2674,2254,197],
+  npExam:       [74,86,94,68,83,83,54,89,91,74,76,98, 89,77,99,76,81,88,96,93,82,81,69,96, 135,121,89,99,92,123,92,88,99,126,59,79, 123,125,59,79,125,66,69,0],
+  injections:   [236,803,1011,431,363,427,312,738,586,363,379,323, 330,274,288,325,278,298,344,329,307,327,270,573, 234,220,151,230,157,203,198,232,214,193,220,194, 646,527,535,568,542,643,425,50],
+  ivDrip:       [4,4,10,15,13,35,14,18,5,8,17,5, 20,23,9,16,12,20,13,18,19,12,10,47, 204,165,100,147,82,142,155,175,166,167,83,115, 85,89,83,87,87,61,59,1],
+  woundLarge:   [33,43,41,48,51,51,20,43,45,47,39,32, 44,45,21,46,39,48,32,16,16,46,23,72, 65,40,27,38,23,41,28,33,41,26,25,28, 50,35,34,50,46,23,39,1],
+  woundMedium:  [168,270,237,236,237,282,172,180,226,239,196,241, 217,258,181,194,211,237,155,229,182,238,246,491, 452,411,303,469,286,497,402,502,544,443,453,502, 595,549,515,552,533,592,452,56],
+  woundSmall:   [56,96,69,57,75,78,52,69,65,74,63,91, 60,115,74,139,116,108,121,105,165,134,103,153, 175,150,92,170,86,156,126,152,145,142,114,120, 89,92,87,89,96,102,129,25],
+  suture:       [5,1,2,1,0,3,0,2,2,1,3,3, 0,4,4,1,1,4,2,1,3,2,3,5, 24,20,12,22,13,22,17,19,22,18,16,18, 7,6,3,4,5,12,3,0],
+  observation:  [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 156,122,89,122,142,0,0,0],
+  sendER:       [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 36,28,20,29,18,29,22,24,28,29,31,36, 29,26,21,24,20,0,0,0],
+  call1669:     [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 18,17,9,14,8,14,11,12,14,16,18,22, 19,20,18,24,22,0,0,0],
+  ekg:          [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 152,122,128,197,165,0,102,0],
+  dtx:          [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 53,41,41,24,38,0,0,0],
+  wccAppt:      [70,64,86,77,71,113,68,70,97,66,91,79, 69,94,82,49,101,83,87,77,87,75,71,107, 0,0,0,0,0,0,0,0,0,0,0,0, 92,84,81,92,98,67,133,0],
+  wccActual:    [86,86,101,90,108,109,75,96,120,87,111,92, 80,118,85,72,110,93,87,98,100,86,82,105, 0,0,0,0,0,0,0,0,0,0,0,0, 81,75,74,81,80,0,0,0],
+  refill:       [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,20,0,0, 43,47,42,43,52,0,22,0],
+  walkin:       [0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0, 32,32,25,25,22,0,0,0],
+};
+
+// ========== HELPERS ==========
+function movingAvg(arr, n=3) {
+  return arr.map((v, i) => {
+    if (i < n-1) return null;
+    const slice = arr.slice(i-n+1, i+1).filter(x => x > 0);
+    return slice.length > 0 ? Math.round(slice.reduce((a,b)=>a+b,0)/slice.length) : null;
+  });
+}
+function fmt(n) { return n > 0 ? n.toLocaleString() : (n === 0 ? '—' : n); }
+function pct(a, b) { return b > 0 ? ((a/b)*100).toFixed(1)+'%' : '—'; }
+function getChange(arr, idx) {
+  if (idx < 1 || arr[idx] === 0 || arr[idx-1] === 0) return null;
+  return ((arr[idx] - arr[idx-1]) / arr[idx-1] * 100).toFixed(1);
+}
+
+const LAST_IDX = 42; // เม.ย.69 = index 42 (last full month)
+const CHANGE_MONTH_COL = '#b45309';
+
+// วันทำการประมาณการณ์ (วันจ–ศ หักวันหยุดราชการไทย) ±1 วัน
+// FY2566=idx0-11 | FY2567=idx12-23 | FY2568=idx24-35 | FY2569=idx36-43
+const WORKING_DAYS = [
+  // FY2566 (ต.ค.65–ก.ย.66)
+  20, 22, 20, 21, 20, 23, 16, 21, 21, 21, 20, 21,
+  // FY2567 (ต.ค.66–ก.ย.67)
+  20, 22, 20, 21, 20, 21, 18, 20, 20, 21, 21, 21,
+  // FY2568 (ต.ค.67–ก.ย.68)
+  20, 21, 20, 22, 19, 21, 19, 19, 21, 22, 20, 22,
+  // FY2569 (ต.ค.68–พ.ค.69*: 5 วัน)
+  20, 21, 21, 21, 20, 22, 18,  5
+];
+// วันหยุดราชการสำคัญที่นับในแต่ละเดือน:
+// ต.ค.: ต.ค.13 (วันนวมินทรมหาราช) + ต.ค.23 (วันปิยมหาราช) → 20 วัน
+// เม.ย.: จักรี + สงกรานต์ 3–4 วัน → 16–19 วัน
+// ส.ค.66: อาสาฬหบูชา + เข้าพรรษา + วันแม่ → 20 วัน
+
+// ========== KPI Cards ==========
+function buildKPI() {
+  const cfg = [
+    { key:'totalVisits',   label:'ยอดบริการรวม',       color:'blue',   icon:'👥', unit:'ราย',  note:'เม.ย.69' },
+    { key:'erTotal',       label:'ยอด ER',              color:'red',    icon:'🚨', unit:'ครั้ง', note:'เม.ย.69' },
+    { key:'scheduled',     label:'ยอดนัดปฐมภูมิ',       color:'green',  icon:'📅', unit:'ราย',  note:'เม.ย.69' },
+    { key:'npExam',        label:'ตรวจโดยพยาบาลเวชฯ',  color:'purple', icon:'👩‍⚕️', unit:'ครั้ง', note:'เม.ย.69' },
+    { key:'injections',    label:'ฉีดยา',               color:'orange', icon:'💉', unit:'ครั้ง', note:'เม.ย.69' },
+    { key:'woundMedium',   label:'ทำแผล (รวมทุกขนาด)',  color:'teal',   icon:'🩹', unit:'ครั้ง', note:'เม.ย.69' },
+  ];
+  const grid = document.getElementById('kpiGrid');
+  grid.innerHTML = '';
+  cfg.forEach(c => {
+    const arr = c.key === 'woundMedium'
+      ? DATA.woundLarge.map((v,i)=>v+DATA.woundMedium[i]+DATA.woundSmall[i])
+      : DATA[c.key];
+    const val = arr[LAST_IDX];
+
+    // MoM: เทียบเดือนก่อน (LAST_IDX-1)
+    const chMoM = getChange(arr, LAST_IDX);
+    const momHtml = chMoM !== null
+      ? `<div class="kpi-trend ${chMoM>=0?'trend-up':'trend-down'}" style="font-size:0.7rem">${chMoM>=0?'▲':'▼'} ${Math.abs(chMoM)}% จากเดือนก่อน</div>`
+      : '';
+
+    // YoY: เทียบเดือนเดียวกันปีก่อน (LAST_IDX-12)
+    const yoyIdx = LAST_IDX - 12; // เม.ย.68 = index 30
+    const prevYear = arr[yoyIdx] || 0;
+    let yoyHtml = '';
+    if (val > 0 && prevYear > 0) {
+      const yoyPct = ((val - prevYear) / prevYear * 100).toFixed(1);
+      const yoyUp = yoyPct >= 0;
+      yoyHtml = `<div class="kpi-trend ${yoyUp?'trend-up':'trend-down'}" style="font-size:0.7rem">${yoyUp?'▲':'▼'} ${Math.abs(yoyPct)}% จากเดือนเดียวกันปีก่อน</div>`;
+    }
+
+    // เฉลี่ย 12 เดือนล่าสุด (idx 31-42)
+    const s12 = Math.max(0, LAST_IDX - 11);
+    const slice12 = arr.slice(s12, LAST_IDX+1).filter(v=>v>0);
+    const avg12 = slice12.length ? Math.round(slice12.reduce((a,b)=>a+b,0) / slice12.length) : 0;
+
+    grid.innerHTML += `
+      <div class="kpi-card ${c.color}">
+        <div class="kpi-label">${c.icon} ${c.label}</div>
+        <div class="kpi-value">${val.toLocaleString()}</div>
+        <div class="kpi-month">${c.unit} · ${c.note}</div>
+        ${yoyHtml}
+        ${momHtml}
+        <div class="kpi-avg">เฉลี่ย 12 เดือน: ${avg12>0?avg12.toLocaleString():'—'} ${c.unit}</div>
+      </div>`;
+  });
+}
+
+// ========== Charts ==========
+const COLORS = {
+  blue:'#3b82f6',blueA:'rgba(59,130,246,0.15)',
+  red:'#ef4444',redA:'rgba(239,68,68,0.15)',
+  green:'#10b981',greenA:'rgba(16,185,129,0.15)',
+  purple:'#8b5cf6',purpleA:'rgba(139,92,246,0.15)',
+  orange:'#f97316',orangeA:'rgba(249,115,22,0.15)',
+  teal:'#14b8a6',tealA:'rgba(20,184,166,0.15)',
+  amber:'#f59e0b',gray:'#9ca3af',
+};
+const CHART_DEFAULTS = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{ labels:{ font:{size:11}, boxWidth:12 } } },
+  scales:{ x:{ ticks:{font:{size:10}} }, y:{ ticks:{font:{size:10}} } }
+};
+let procChartInst = null;
+
+// ===== Custom plugin: vertical annotation line at system-change point =====
+// ก.ค.68 = index 33 → ส.ค.68 = index 34  (midpoint between them marks the change)
+const sysChangePlugin = {
+  id:'sysChangeAnnotation',
+  afterDraw(chart) {
+    const xScale = chart.scales.x;
+    const yScale = chart.scales.y;
+    if (!xScale || !yScale) return;
+    // Draw midpoint between index 33 (ก.ค.68) and index 34 (ส.ค.68)
+    const x1 = xScale.getPixelForValue(33);
+    const x2 = xScale.getPixelForValue(34);
+    const xMid = (x1 + x2) / 2;
+    const yTop = yScale.top;
+    const yBot = yScale.bottom;
+    const ctx = chart.ctx;
+    ctx.save();
+    // Shaded band
+    ctx.fillStyle = 'rgba(180,83,9,0.07)';
+    ctx.fillRect(x1, yTop, x2 - x1, yBot - yTop);
+    // Dashed vertical line
+    ctx.beginPath();
+    ctx.setLineDash([5,4]);
+    ctx.strokeStyle = 'rgba(180,83,9,0.75)';
+    ctx.lineWidth = 2;
+    ctx.moveTo(xMid, yTop);
+    ctx.lineTo(xMid, yBot);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Label background
+    const label1 = '⚠ เปลี่ยนระบบบันทึก';
+    const label2 = 'ก.ค. 68';
+    ctx.font = 'bold 9.5px "Segoe UI",sans-serif';
+    const tw = Math.max(ctx.measureText(label1).width, ctx.measureText(label2).width) + 10;
+    const lx = xMid - tw / 2;
+    const ly = yTop + 8;
+    ctx.fillStyle = 'rgba(255,243,205,0.93)';
+    ctx.strokeStyle = 'rgba(180,83,9,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) { ctx.roundRect(lx, ly, tw, 30, 4); } else { ctx.rect(lx, ly, tw, 30); }
+    ctx.fill();
+    ctx.stroke();
+    // Label text
+    ctx.fillStyle = '#92400e';
+    ctx.textAlign = 'center';
+    ctx.fillText(label1, xMid, ly + 12);
+    ctx.fillText(label2, xMid, ly + 24);
+    ctx.restore();
+  }
+};
+
+function mainTrendChart() {
+  const ma = movingAvg(DATA.totalVisits);
+  new Chart(document.getElementById('mainTrendChart'), {
+    type:'line',
+    data:{
+      labels:MONTHS,
+      datasets:[
+        { label:'ยอดบริการรวม', data:DATA.totalVisits.map((v,i)=>i<=LAST_IDX?v:null),
+          borderColor:COLORS.blue, backgroundColor:COLORS.blueA, fill:true, tension:0.3, pointRadius:4, pointHoverRadius:6 },
+        { label:'ยอดบริการรวม (พ.ค.69*)', data:DATA.totalVisits.map((v,i)=>i===LAST_IDX+1?v:null),
+          borderColor:COLORS.gray, backgroundColor:'transparent', pointRadius:5, pointStyle:'triangle', showLine:false },
+        { label:'Moving Avg 3M', data:ma,
+          borderColor:COLORS.orange, backgroundColor:'transparent', borderDash:[6,3], tension:0.4, pointRadius:0 },
+        { label:'ER', data:DATA.erTotal.map((v,i)=>i<=LAST_IDX?v:null),
+          borderColor:COLORS.red, backgroundColor:COLORS.redA, fill:false, tension:0.3, pointRadius:3 },
+      ]
+    },
+    plugins:[sysChangePlugin],
+    options:{
+      ...CHART_DEFAULTS,
+      plugins:{
+        ...CHART_DEFAULTS.plugins,
+        tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y?.toLocaleString()||'—'} ราย` } }
+      },
+      scales:{
+        x:{ ticks:{font:{size:10}} },
+        y:{ ticks:{font:{size:10}, callback:v=>v.toLocaleString()}, beginAtZero:true }
+      }
+    }
+  });
+}
+
+function erOpdChart() {
+  new Chart(document.getElementById('erOpdChart'), {
+    type:'bar',
+    data:{
+      labels:MONTHS,
+      datasets:[
+        { label:'OPD', data:DATA.opdTotal, backgroundColor:COLORS.blueA, borderColor:COLORS.blue, borderWidth:1.5, stack:'s' },
+        { label:'ER', data:DATA.erTotal, backgroundColor:'rgba(239,68,68,0.7)', borderColor:COLORS.red, borderWidth:1.5, stack:'s' },
+      ]
+    },
+    plugins:[sysChangePlugin],
+    options:{
+      ...CHART_DEFAULTS,
+      plugins:{
+        ...CHART_DEFAULTS.plugins,
+        tooltip:{ callbacks:{
+          label: ctx => {
+            const total = DATA.totalVisits[ctx.dataIndex]||0;
+            const v = ctx.parsed.y||0;
+            const p = total>0?(v/total*100).toFixed(1):'—';
+            return `${ctx.dataset.label}: ${v.toLocaleString()} ราย (${p}%)`;
+          }
+        }}
+      },
+      scales:{
+        x:{ ticks:{font:{size:10}}, stacked:true },
+        y:{ ticks:{font:{size:10},callback:v=>v.toLocaleString()}, stacked:true, beginAtZero:true }
+      }
+    }
+  });
+}
+
+function erTrendChart() {
+  const erPct = DATA.erTotal.map((v,i)=>DATA.totalVisits[i]>0?(v/DATA.totalVisits[i]*100).toFixed(1):null);
+  const ctx = document.getElementById('erTrendChart');
+  new Chart(ctx, {
+    data:{
+      labels:MONTHS,
+      datasets:[
+        { type:'bar', label:'จำนวน ER', data:DATA.erTotal, backgroundColor:DATA.erTotal.map((v,i)=>v>1000?'rgba(239,68,68,0.7)':'rgba(239,68,68,0.35)'), yAxisID:'y' },
+        { type:'line', label:'% ER ต่อยอดรวม', data:erPct, borderColor:COLORS.amber, pointRadius:3, tension:0.3, yAxisID:'y2' },
+      ]
+    },
+    options:{
+      ...CHART_DEFAULTS,
+      scales:{
+        x:{ ticks:{font:{size:10}} },
+        y:{ type:'linear', position:'left', ticks:{font:{size:10},callback:v=>v.toLocaleString()}, beginAtZero:true },
+        y2:{ type:'linear', position:'right', ticks:{font:{size:10},callback:v=>v+'%'}, grid:{drawOnChartArea:false}, beginAtZero:true, max:40 }
+      }
+    }
+  });
+}
+
+function buildProcChart(mode) {
+  if (procChartInst) { procChartInst.destroy(); procChartInst = null; }
+  let datasets;
+  if (mode==='inj') {
+    datasets = [
+      { label:'ฉีดยา', data:DATA.injections, borderColor:COLORS.orange, fill:true, backgroundColor:COLORS.orangeA, tension:0.3 },
+      { label:'IV Fluid/Drip', data:DATA.ivDrip, borderColor:COLORS.teal, fill:false, tension:0.3 },
+    ];
+  } else if (mode==='wound') {
+    const wTotal = DATA.woundLarge.map((v,i)=>v+DATA.woundMedium[i]+DATA.woundSmall[i]);
+    datasets = [
+      { label:'ทำแผลรวม', data:wTotal, borderColor:COLORS.blue, fill:true, backgroundColor:COLORS.blueA, tension:0.3 },
+      { label:'ใหญ่', data:DATA.woundLarge, borderColor:COLORS.red, fill:false, tension:0.3, borderDash:[4,2] },
+      { label:'เย็บแผล', data:DATA.suture, borderColor:COLORS.purple, fill:false, tension:0.3, borderDash:[2,2] },
+    ];
+  } else {
+    datasets = [
+      { label:'EKG', data:DATA.ekg, borderColor:COLORS.blue, fill:true, backgroundColor:COLORS.blueA, tension:0.3 },
+      { label:'เจาะ DTX', data:DATA.dtx, borderColor:COLORS.green, fill:false, tension:0.3 },
+      { label:'ตรวจโดย NP', data:DATA.npExam, borderColor:COLORS.purple, fill:false, tension:0.3 },
+    ];
+  }
+  procChartInst = new Chart(document.getElementById('procChart'), {
+    type:'line',
+    data:{ labels:MONTHS, datasets: datasets.map(d=>({...d, pointRadius:3})) },
+    options:{ ...CHART_DEFAULTS, scales:{
+      x:{ticks:{font:{size:10}}},
+      y:{ticks:{font:{size:10}},beginAtZero:true}
+    }}
+  });
+}
+
+window.showProcChart = function(mode) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  buildProcChart(mode);
+};
+
+function appointmentChart() {
+  // กรองเฉพาะเดือนที่มีข้อมูล WCC (FY66+67: idx 0-23 และ FY69: idx 36-42)
+  // แทรก "──" เป็น separator ระหว่างช่วงที่ขาดหาย (FY2568 ไม่มีข้อมูล WCC)
+  const wccIdx = [];
+  DATA.wccAppt.forEach((v,i)=>{ if(i<=23 || (i>=36 && i<=42)) wccIdx.push(i); });
+
+  const sepLabel = '— FY68 —'; // marker
+  const labels  = [...wccIdx.slice(0,24).map(i=>MONTHS[i]), sepLabel, ...wccIdx.slice(24).map(i=>MONTHS[i])];
+  const apptD   = [...wccIdx.slice(0,24).map(i=>DATA.wccAppt[i]),   null, ...wccIdx.slice(24).map(i=>DATA.wccAppt[i])];
+  const actualD = [...wccIdx.slice(0,24).map(i=>DATA.wccActual[i]), null, ...wccIdx.slice(24).map(i=>DATA.wccActual[i])];
+  const rateD   = apptD.map((v,j)=>{ if(v==null)return null; const act=actualD[j]; return (v>0&&act!=null)?+(act/v*100).toFixed(1):null; });
+
+  new Chart(document.getElementById('appointmentChart'), {
+    data:{
+      labels,
+      datasets:[
+        { type:'bar',  label:'WCC นัด (เป้า)',        data:apptD,   backgroundColor:'rgba(139,92,246,0.25)', borderColor:COLORS.purple, borderWidth:1.5, yAxisID:'y', skipNull:true },
+        { type:'bar',  label:'WCC จริง (มาตามนัด)',   data:actualD, backgroundColor:'rgba(139,92,246,0.65)', borderColor:COLORS.purple, borderWidth:1.5, yAxisID:'y', skipNull:true },
+        { type:'line', label:'อัตรามาตามนัด (%)',     data:rateD,   borderColor:COLORS.amber, pointRadius:4, pointBackgroundColor:COLORS.amber, fill:false, tension:0.3, yAxisID:'y2', borderWidth:2, spanGaps:false },
+      ]
+    },
+    options:{
+      ...CHART_DEFAULTS,
+      plugins:{
+        ...CHART_DEFAULTS.plugins,
+        tooltip:{ callbacks:{ label: ctx => ctx.parsed.y!=null ? `${ctx.dataset.label}: ${ctx.parsed.y}${ctx.dataset.yAxisID==='y2'?'%':' ราย'}` : '' } }
+      },
+      scales:{
+        x:{ ticks:{ font:{size:9.5}, maxRotation:45, callback(val,idx){ const l=this.getLabelForValue(val); return l===sepLabel?'ไม่มีข้อมูล WCC (FY68)':l; } } },
+        y:{ type:'linear', position:'left',  ticks:{font:{size:10},callback:v=>v.toLocaleString()}, beginAtZero:true, title:{display:true,text:'จำนวน (ราย)',font:{size:10}} },
+        y2:{ type:'linear', position:'right', ticks:{font:{size:10},callback:v=>v+'%'}, grid:{drawOnChartArea:false}, beginAtZero:true, max:130, title:{display:true,text:'อัตรามาตามนัด (%)',font:{size:10}} }
+      }
+    }
+  });
+}
+
+function npChart() {
+  const npRate = DATA.npExam.map((v,i)=>DATA.totalVisits[i]>0?+(v/DATA.totalVisits[i]*100).toFixed(2):0);
+  new Chart(document.getElementById('npChart'), {
+    data:{
+      labels:MONTHS,
+      datasets:[
+        { type:'bar', label:'NP ตรวจ', data:DATA.npExam, backgroundColor:COLORS.purpleA, borderColor:COLORS.purple, borderWidth:1.5, yAxisID:'y' },
+        { type:'line', label:'NP Rate %', data:npRate, borderColor:COLORS.amber, pointRadius:2, tension:0.3, yAxisID:'y2' },
+      ]
+    },
+    options:{
+      ...CHART_DEFAULTS,
+      scales:{
+        x:{ticks:{font:{size:9}}},
+        y:{position:'left',ticks:{font:{size:9}},beginAtZero:true},
+        y2:{position:'right',ticks:{font:{size:9},callback:v=>v+'%'},grid:{drawOnChartArea:false},beginAtZero:true,max:3}
+      }
+    }
+  });
+}
+
+function observeChart() {
+  new Chart(document.getElementById('observeChart'), {
+    type:'bar',
+    data:{
+      labels:MONTHS,
+      datasets:[
+        { label:'สังเกตอาการ (Observe)', data:DATA.observation, backgroundColor:'rgba(245,158,11,0.4)', borderColor:COLORS.amber, borderWidth:1.5, stack:'s' },
+        { label:'ส่ง ER', data:DATA.sendER, backgroundColor:'rgba(239,68,68,0.5)', borderColor:COLORS.red, borderWidth:1.5, stack:'s' },
+        { label:'ตาม 1669', data:DATA.call1669, backgroundColor:'rgba(139,92,246,0.5)', borderColor:COLORS.purple, borderWidth:1.5, stack:'s' },
+      ]
+    },
+    options:{
+      ...CHART_DEFAULTS,
+      plugins:{
+        ...CHART_DEFAULTS.plugins,
+        tooltip:{ callbacks:{
+          label: ctx => {
+            const obs = DATA.observation[ctx.dataIndex]||0;
+            const snd = DATA.sendER[ctx.dataIndex]||0;
+            const c16 = DATA.call1669[ctx.dataIndex]||0;
+            const total = obs+snd+c16;
+            const v = ctx.parsed.y||0;
+            const p = total>0?(v/total*100).toFixed(1):'—';
+            return `${ctx.dataset.label}: ${v.toLocaleString()} (${p}%)`;
+          }
+        }}
+      },
+      scales:{
+        x:{ticks:{font:{size:9}},stacked:true},
+        y:{ticks:{font:{size:9}},stacked:true,beginAtZero:true}
+      }
+    }
+  });
+}
+
+function fyChart() {
+  function qsum(arr,s,e){return arr.slice(s,e).reduce((a,b)=>a+b,0);}
+  const fyDefs=[
+    {lbl:'ปีงบ 2566\n(ต.ค.65–ก.ย.66)',s:0,e:12,n:12},
+    {lbl:'ปีงบ 2567\n(ต.ค.66–ก.ย.67)',s:12,e:24,n:12},
+    {lbl:'ปีงบ 2568\n(ต.ค.67–ก.ย.68)',s:24,e:36,n:12},
+    {lbl:'ปีงบ 2569\n(ต.ค.68–เม.ย.69)\n7 เดือน',s:36,e:43,n:7},
+  ];
+  const tvSums=fyDefs.map(f=>qsum(DATA.totalVisits,f.s,f.e));
+  const erSums=fyDefs.map(f=>qsum(DATA.erTotal,f.s,f.e));
+  const labels=fyDefs.map((f,i)=>`${f.lbl}\nรวม ${tvSums[i].toLocaleString()}`);
+  new Chart(document.getElementById('fyChart'), {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'OPD',data:tvSums.map((v,i)=>v-erSums[i]),backgroundColor:['rgba(251,191,36,0.5)','rgba(16,185,129,0.4)','rgba(59,130,246,0.4)','rgba(139,92,246,0.4)'],borderColor:['#d97706','#059669','#3b82f6','#8b5cf6'],borderWidth:2,stack:'s'},
+        {label:'ER',data:erSums,backgroundColor:'rgba(239,68,68,0.6)',borderColor:COLORS.red,borderWidth:2,stack:'s'},
+      ]
+    },
+    options:{...CHART_DEFAULTS,indexAxis:'y',
+      scales:{x:{ticks:{font:{size:9},callback:v=>v.toLocaleString()},stacked:true},y:{ticks:{font:{size:9}},stacked:true}},
+      plugins:{...CHART_DEFAULTS.plugins,tooltip:{callbacks:{
+        label: ctx => {
+          const v = ctx.parsed.x||0;
+          const fi = ctx.dataIndex;
+          const total = tvSums[fi]||0;
+          const p = total>0?(v/total*100).toFixed(1):'—';
+          return `${ctx.dataset.label}: ${v.toLocaleString()} ราย (${p}%)`;
+        },
+        footer: items => {
+          const fi = items[0]?.dataIndex;
+          if(fi==null) return '';
+          return `รวม: ${tvSums[fi].toLocaleString()} ราย | %ER: ${tvSums[fi]>0?(erSums[fi]/tvSums[fi]*100).toFixed(1):'—'}%`;
+        }
+      }}}
+    }
+  });
+}
+
+// ========== Data Table ==========
+function buildTable() {
+  const tbl = document.getElementById('mainTable');
+  const n = MONTHS.length; // 44 months total
+
+  // FY badge for each month index
+  const fyBadge = [
+    ...Array(12).fill('<br><span style="font-size:0.58rem;background:#fef3c7;color:#92400e;padding:1px 4px;border-radius:6px;font-weight:600">FY66</span>'),
+    ...Array(12).fill('<br><span style="font-size:0.58rem;background:#d1fae5;color:#065f46;padding:1px 4px;border-radius:6px;font-weight:600">FY67</span>'),
+    ...Array(12).fill('<br><span style="font-size:0.58rem;background:#dbeafe;color:#1e40af;padding:1px 4px;border-radius:6px;font-weight:600">FY68</span>'),
+    ...Array(8).fill('<br><span style="font-size:0.58rem;background:#f3e8ff;color:#6b21a8;padding:1px 4px;border-radius:6px;font-weight:600">FY69</span>'),
+  ];
+
+  // Reversed month indices: newest (idx 43) → oldest (idx 0)
+  const revIdx = Array.from({length:n}, (_,i) => n-1-i);
+
+  // Build header
+  let html = '<thead><tr>';
+  html += '<th style="min-width:160px">บริการ</th>';
+  // All 3 avg columns = exactly 12 months each
+  // Col1: 12 เดือนล่าสุด = พ.ค.68–เม.ย.69 (idx 31–42)
+  // Col2: ปีงบ 2568 = ต.ค.67–ก.ย.68 (idx 24–35)
+  // Col3: ปีงบ 2567 = ต.ค.66–ก.ย.67 (idx 12–23)
+  html += '<th style="background:#2d5016;min-width:82px;white-space:nowrap;font-size:0.75rem">เฉลี่ย/เดือน<br><small style="font-weight:400;opacity:0.9;font-size:0.65rem">12 เดือนล่าสุด</small><br><small style="font-weight:400;opacity:0.7;font-size:0.58rem">พ.ค.68–เม.ย.69</small></th>';
+  html += '<th style="background:#1e3a5f;min-width:82px;white-space:nowrap;font-size:0.75rem">เฉลี่ย/เดือน<br><small style="font-weight:400;opacity:0.9;font-size:0.65rem">ปีงบ 2568</small><br><small style="font-weight:400;opacity:0.7;font-size:0.58rem">(12 เดือน)</small></th>';
+  html += '<th style="background:#065f46;min-width:82px;white-space:nowrap;font-size:0.75rem">เฉลี่ย/เดือน<br><small style="font-weight:400;opacity:0.9;font-size:0.65rem">ปีงบ 2567</small><br><small style="font-weight:400;opacity:0.7;font-size:0.58rem">(12 เดือน)</small></th>';
+  revIdx.forEach(i => {
+    html += `<th>${MONTHS[i]}${fyBadge[i]}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  function calcAvg(arr, s, e) {
+    const vals = arr.slice(s, e).filter(v=>v>0);
+    return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+  }
+
+  function heatClass(v, arr) {
+    const nonzero = arr.filter(x=>x>0);
+    if (!nonzero.length || v===0) return 'na-cell';
+    const max=Math.max(...nonzero), min=Math.min(...nonzero), range=max-min;
+    if (range===0) return '';
+    const norm=(v-min)/range;
+    if (norm>=0.75) return 'heat-high';
+    if (norm>=0.4) return 'heat-mid';
+    return 'heat-low';
+  }
+
+  // MoM badge: compare value at idx i vs previous month (i-1)
+  function yoyBadge(arr, i) {
+    if (i < 1) return '';
+    const cur = arr[i] || 0;
+    const prev = arr[i-1] || 0;
+    if (!cur || !prev) return '';
+    const pct = ((cur - prev) / prev * 100);
+    const sign = pct >= 0 ? '+' : '';
+    const color = pct >= 0 ? '#15803d' : '#b91c1c';
+    const bg = pct >= 0 ? '#dcfce7' : '#fee2e2';
+    const arrow = pct >= 0 ? '▲' : '▼';
+    return `<br><span style="font-size:0.58rem;background:${bg};color:${color};padding:1px 3px;border-radius:4px;font-weight:600;white-space:nowrap">${arrow}${sign}${pct.toFixed(1)}%</span>`;
+  }
+
+  function tableRow(label, arr, showHeat=true, isPartialLast=true, subrow=false) {
+    // Averages — all 12 months
+    const avg12  = calcAvg(arr, 31, 43); // 12 เดือนล่าสุด: idx 31-42 (พ.ค.68–เม.ย.69)
+    const avg68  = calcAvg(arr, 24, 36); // ปีงบ 2568: idx 24-35
+    const avg67  = calcAvg(arr, 12, 24); // ปีงบ 2567: idx 12-23
+    const bg = subrow ? '#f8fafc' : '#fff';
+    let row = `<tr class="${subrow?'subrow':''}"><td style="background:${bg}">${label}</td>`;
+    row += `<td style="font-weight:700;background:#edf7e4;color:#166534;text-align:center">${avg12>0?avg12.toLocaleString():'—'}</td>`;
+    row += `<td style="font-weight:700;background:#dbeafe;color:#1e40af;text-align:center">${avg68>0?avg68.toLocaleString():'—'}</td>`;
+    row += `<td style="font-weight:700;background:#d1fae5;color:#065f46;text-align:center">${avg67>0?avg67.toLocaleString():'—'}</td>`;
+    // Month cells newest → oldest, each with YoY badge
+    revIdx.forEach(i => {
+      const v = arr[i] || 0;
+      const isPartial = (i === n-1);
+      const cls = isPartial ? 'note-cell' : (showHeat && v>0 ? heatClass(v,arr) : (v===0?'na-cell':''));
+      const valStr = isPartial && v>0 ? v.toLocaleString()+'*' : (v>0 ? v.toLocaleString() : '—');
+      const yoy = (!isPartial && v>0) ? yoyBadge(arr, i) : '';
+      row += `<td class="${cls}" style="line-height:1.3">${valStr}${yoy}</td>`;
+    });
+    row += '</tr>';
+    return row;
+  }
+
+  function sectionHeader(label) {
+    return `<tr class="section-header"><td colspan="${n+4}">${label}</td></tr>`;
+  }
+
+  html += sectionHeader('📊 ยอดบริการรวม');
+  html += tableRow('ยอดบริการรวมทั้งหมด', DATA.totalVisits);
+  html += tableRow('↳ OPD (ไม่รวม ER)', DATA.opdTotal, true, true, true);
+  html += tableRow('↳ ER รวม', DATA.erTotal, true, true, true);
+  html += tableRow('  ↳ ER ช่วงเช้า', DATA.erMorning, true, true, true);
+  html += tableRow('  ↳ ER ช่วงบ่าย', DATA.erAfternoon, true, true, true);
+  html += tableRow('↳ ยอดนัดปฐมภูมิ', DATA.scheduled, true, true, true);
+
+  html += sectionHeader('👩‍⚕️ การตรวจและประเมินผู้ป่วย');
+  html += tableRow('ตรวจโดยพยาบาลเวชฯ (NP)', DATA.npExam);
+
+  html += sectionHeader('💉 หัตถการการรักษา');
+  html += tableRow('ฉีดยา (Muscle/Sc/ID/IV)', DATA.injections);
+  html += tableRow('IV Fluid / Drip ยา', DATA.ivDrip);
+  html += tableRow('ทำแผล (ใหญ่)', DATA.woundLarge, true, true, true);
+  html += tableRow('ทำแผล (กลาง)', DATA.woundMedium, true, true, true);
+  html += tableRow('ทำแผล (เล็ก)', DATA.woundSmall, true, true, true);
+  const woundTotal = DATA.woundLarge.map((v,i)=>v+DATA.woundMedium[i]+DATA.woundSmall[i]);
+  html += tableRow('รวมทำแผลทุกขนาด', woundTotal);
+  html += tableRow('เย็บแผล', DATA.suture);
+
+  html += sectionHeader('🔬 การตรวจทางห้องปฏิบัติการและ Diagnostic');
+  html += tableRow('EKG', DATA.ekg);
+  html += tableRow('เจาะ DTX', DATA.dtx);
+
+  html += sectionHeader('📡 การเฝ้าระวังและส่งต่อ');
+  html += tableRow('ผู้ป่วย Observe', DATA.observation);
+  html += tableRow('ส่ง ER', DATA.sendER);
+  html += tableRow('ตาม 1669', DATA.call1669);
+
+  html += sectionHeader('👶 Well Child Clinic (WCC)');
+  html += tableRow('ยอดนัด WCC', DATA.wccAppt);
+  html += tableRow('ยอดจริง WCC', DATA.wccActual);
+
+  html += '</tbody>';
+  tbl.innerHTML = html;
+}
+
+// ========== TAB SWITCH ==========
+window.switchStatsTab = function(btn, panelId) {
+  document.querySelectorAll('.stats-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.stats-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+};
+
+// ========== DAILY STATS ==========
+const DOW_DAYS = ['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์'];
+const DOW_KEYS = ['จ','อ','พ','พฤ','ศ'];
+const DOW_P1 = {
+  จ:{count:32, avgTotal:402.7, std:54.2},
+  อ:{count:35, avgTotal:379.3, std:58.2},
+  พ:{count:35, avgTotal:371.1, std:43.1},
+  พฤ:{count:38, avgTotal:433.0, std:51.5},
+  ศ:{count:38, avgTotal:379.2, std:114.1},
+};
+const DOW_P2 = {
+  จ:{count:28, avgTotal:278.5, avgAppt:112.0, pctAppt:40.2, std:33.2},
+  อ:{count:30, avgTotal:276.2, avgAppt:119.9, pctAppt:43.4, std:39.4},
+  พ:{count:28, avgTotal:258.0, avgAppt:112.5, pctAppt:43.6, std:31.2},
+  พฤ:{count:29, avgTotal:324.9, avgAppt:135.3, pctAppt:41.6, std:35.8},
+  ศ:{count:29, avgTotal:266.8, avgAppt:103.7, pctAppt:38.9, std:31.7},
+};
+const WEEK_SHARE = {จ:18.7, อ:19.5, พ:18.3, พฤ:23.4, ศ:20.0};
+
+function buildDailyStats() {
+  // KPI mini cards
+  const p2Avg = DOW_KEYS.map(k=>DOW_P2[k].avgTotal);
+  const busyDay = DOW_DAYS[DOW_KEYS.indexOf('พฤ')];
+  const quietDay = DOW_DAYS[DOW_KEYS.indexOf('พ')];
+  const avgApptPct = (DOW_KEYS.reduce((s,k)=>s+DOW_P2[k].pctAppt,0)/5).toFixed(1);
+  document.getElementById('dailyKPI').innerHTML = `
+    <div class="stat-mini"><div class="stat-mini-val">325</div><div class="stat-mini-label">🏆 วันพฤหัส (สูงสุด)</div><div class="stat-mini-sub">เฉลี่ย คน/วัน (P2)</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">258</div><div class="stat-mini-label">วันพุธ (ต่ำสุด)</div><div class="stat-mini-sub">เฉลี่ย คน/วัน (P2)</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${avgApptPct}%</div><div class="stat-mini-label">📅 นัดเฉลี่ย</div><div class="stat-mini-sub">ต่อวัน (P2: กค68–กพ69)</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">322</div><div class="stat-mini-label">วันทำการ</div><div class="stat-mini-sub">ตค67–กพ69 (ไม่นับมีค69*)</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">23.4%</div><div class="stat-mini-label">⚡ % สัดส่วนพฤหัส</div><div class="stat-mini-sub">ต่อภาระงานทั้งสัปดาห์</div></div>
+  `;
+  // Bar chart: P1 vs P2 avg by DOW
+  new Chart(document.getElementById('dowBarChart'),{
+    type:'bar',
+    data:{
+      labels:DOW_DAYS,
+      datasets:[
+        {label:'ตค67–มิย68 (ระบบเก่า)',data:DOW_KEYS.map(k=>DOW_P1[k].avgTotal),backgroundColor:'rgba(59,130,246,0.4)',borderColor:'#3b82f6',borderWidth:1.5},
+        {label:'กค68–กพ69 (ระบบใหม่)',data:DOW_KEYS.map(k=>DOW_P2[k].avgTotal),backgroundColor:'rgba(16,185,129,0.5)',borderColor:'#10b981',borderWidth:1.5},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:12}}},
+      scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}},beginAtZero:true,max:500}}}
+  });
+  // Stacked chart: appt vs walk-in
+  new Chart(document.getElementById('dowApptChart'),{
+    type:'bar',
+    data:{
+      labels:DOW_DAYS,
+      datasets:[
+        {label:'ผู้ป่วยนัด',data:DOW_KEYS.map(k=>DOW_P2[k].avgAppt),backgroundColor:'rgba(16,185,129,0.7)',borderColor:'#10b981',borderWidth:1.5,stack:'s'},
+        {label:'Walk-in',data:DOW_KEYS.map(k=>+(DOW_P2[k].avgTotal-DOW_P2[k].avgAppt).toFixed(1)),backgroundColor:'rgba(59,130,246,0.4)',borderColor:'#3b82f6',borderWidth:1.5,stack:'s'},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:12}}},
+      scales:{x:{ticks:{font:{size:10}},stacked:true},y:{ticks:{font:{size:10}},stacked:true,beginAtZero:true}}}
+  });
+  // Table
+  let html='<thead><tr><th>วันในสัปดาห์</th><th>P1: เฉลี่ย/วัน</th><th>P1: SD</th><th>P2: เฉลี่ย/วัน</th><th>P2: ผู้ป่วยนัด</th><th>P2: Walk-in</th><th>P2: %นัด</th><th>สัดส่วน/สัปดาห์</th><th>จำนวนวัน(P2)</th></tr></thead><tbody>';
+  DOW_KEYS.forEach((k,i)=>{
+    const isBest = k==='พฤ', isLow = k==='พ';
+    const cls = isBest?'s-best':(isLow?'s-worst':'');
+    html+=`<tr class="${cls}"><td>วัน${DOW_DAYS[i]}</td><td>${DOW_P1[k].avgTotal}</td><td>±${DOW_P1[k].std}</td><td>${DOW_P2[k].avgTotal}</td><td>${DOW_P2[k].avgAppt}</td><td>${(DOW_P2[k].avgTotal-DOW_P2[k].avgAppt).toFixed(1)}</td><td>${DOW_P2[k].pctAppt}%</td><td>${WEEK_SHARE[k]}%</td><td>${DOW_P2[k].count} วัน</td></tr>`;
+  });
+  html+='</tbody>';
+  document.getElementById('dowTable').innerHTML=html;
+}
+
+// ========== MONTHLY STATS ==========
+function buildMonthlyStats() {
+  const n = LAST_IDX+1; // number of full months (43 = idx 0–42)
+  const full = DATA.totalVisits.slice(0,n);
+  const er17 = DATA.erTotal.slice(0,n);
+  const sch17 = DATA.scheduled.slice(0,n);
+  const inj17 = DATA.injections.slice(0,n);
+  const wTotal17 = DATA.woundLarge.slice(0,n).map((v,i)=>v+DATA.woundMedium[i]+DATA.woundSmall[i]);
+
+  function stats(arr) {
+    const nonzero = arr.filter(v=>v>0);
+    const mean = nonzero.reduce((a,b)=>a+b,0)/nonzero.length;
+    const variance = nonzero.reduce((s,v)=>s+(v-mean)**2,0)/nonzero.length;
+    const sd = Math.sqrt(variance);
+    return {mean:Math.round(mean), sd:Math.round(sd), min:Math.min(...nonzero), max:Math.max(...nonzero), cv:+(sd/mean*100).toFixed(1)};
+  }
+  const tvSt=stats(full), erSt=stats(er17), schSt=stats(sch17.filter(v=>v>0)), injSt=stats(inj17), wSt=stats(wTotal17);
+  const tvMean=tvSt.mean, tvSd=tvSt.sd, tvMin=tvSt.min, tvMax=tvSt.max, tvCV=tvSt.cv;
+
+  document.getElementById('monthlyKPI').innerHTML=`
+    <div class="stat-mini"><div class="stat-mini-val">${tvMean.toLocaleString()}</div><div class="stat-mini-label">เฉลี่ย/เดือน</div><div class="stat-mini-sub">ยอดบริการรวม (${n} เดือน)</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">±${tvSd.toLocaleString()}</div><div class="stat-mini-label">SD</div><div class="stat-mini-sub">ยอดบริการรวม</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${tvCV}%</div><div class="stat-mini-label">CV (ความผันผวน)</div><div class="stat-mini-sub">ปานกลาง</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${tvMax.toLocaleString()}</div><div class="stat-mini-label">🔴 สูงสุด</div><div class="stat-mini-sub">${MONTHS[full.indexOf(tvMax)]} — Peak</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${tvMin.toLocaleString()}</div><div class="stat-mini-label">🟢 ต่ำสุด</div><div class="stat-mini-sub">${MONTHS[full.indexOf(tvMin)]} — Low Season</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">~${Math.round(tvMean/21).toLocaleString()}</div><div class="stat-mini-label">เฉลี่ยต่อวันทำการ <span class="wd-badge">WD</span></div><div class="stat-mini-sub">อ้างอิงวันทำการจริงต่อเดือน</div></div>
+  `;
+
+  // Distribution chart (each month as scatter)
+  currentTVData = full;
+  monthlyDistChartInst = new Chart(document.getElementById('monthlyDistChart'),{
+    type:'bar',
+    data:{
+      labels:MONTHS.slice(0,n),
+      datasets:[
+        {
+          label:'ยอดบริการรวม',
+          data:full,
+          backgroundColor:full.map(v=>v===tvMax?'rgba(239,68,68,0.7)':v===tvMin?'rgba(16,185,129,0.5)':'rgba(59,130,246,0.4)'),
+          borderColor:full.map(v=>v===tvMax?'#ef4444':v===tvMin?'#10b981':'#3b82f6'),
+          borderWidth:1.5
+        },
+        {
+          label:'ค่าเฉลี่ย (Mean)',
+          data:full.map(()=>tvMean),
+          type:'line',
+          borderColor:'#f59e0b',
+          borderWidth:2,
+          borderDash:[6,3],
+          pointRadius:0,
+          fill:false
+        }
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{font:{size:9},boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>{
+          const v=ctx.parsed.y;
+          const pct=tvMean>0?((v-tvMean)/tvMean*100).toFixed(1):'—';
+          return ctx.datasetIndex===0?`${v.toLocaleString()} ราย (${+pct>=0?'+':''}${pct}% จาก Mean)`:ctx.dataset.label+': '+v.toLocaleString();
+        }}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},callback:v=>v.toLocaleString()},beginAtZero:true}}}
+  });
+
+  // Per-working-day chart (ใช้ WORKING_DAYS จริง)
+  const wdSlice = WORKING_DAYS.slice(0, n);
+  new Chart(document.getElementById('perDayChart'),{
+    type:'line',
+    data:{
+      labels:MONTHS.slice(0,n),
+      datasets:[
+        {label:'ยอดรวม/วันทำการ ★',data:full.map((v,i)=>wdSlice[i]>0?+(v/wdSlice[i]).toFixed(1):null),borderColor:'#3b82f6',fill:true,backgroundColor:'rgba(59,130,246,0.1)',tension:0.3,pointRadius:3},
+        {label:'ER/วันทำการ ★',data:er17.map((v,i)=>wdSlice[i]>0?+(v/wdSlice[i]).toFixed(1):null),borderColor:'#ef4444',fill:false,tension:0.3,pointRadius:2},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y} ราย/วัน (วันทำการจริง)`}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}},beginAtZero:true}}}
+  });
+
+  // Stats summary table
+  const metrics=[
+    {label:'ยอดบริการรวม',s:tvSt,best:full.indexOf(tvMax),worst:full.indexOf(tvMin)},
+    {label:'ER รวม',s:erSt,best:er17.indexOf(erSt.max),worst:er17.indexOf(erSt.min)},
+    {label:'ยอดนัดปฐมภูมิ',s:schSt,best:sch17.indexOf(schSt.max),worst:sch17.indexOf(schSt.min)},
+    {label:'ฉีดยา',s:injSt,best:inj17.indexOf(injSt.max),worst:inj17.indexOf(injSt.min)},
+    {label:'ทำแผล (รวม)',s:wSt,best:wTotal17.indexOf(wSt.max),worst:wTotal17.indexOf(wSt.min)},
+  ];
+  let tHtml=`<thead><tr><th>ตัวชี้วัด</th><th>เฉลี่ย/เดือน</th><th>SD</th><th>CV%</th><th>ต่ำสุด</th><th>เดือนต่ำสุด</th><th>สูงสุด</th><th>เดือนสูงสุด</th><th>เฉลี่ย/วันทำการ <span class="wd-badge">WD</span></th></tr></thead><tbody>`;
+  // คำนวณ weighted per-working-day: sum(visits) / sum(workingDays)
+  const wdTotal = WORKING_DAYS.slice(0,n).reduce((a,b)=>a+b,0);
+  metrics.forEach(m=>{
+    const totalVisitsAll = m.label==='ยอดบริการรวม'?full.reduce((a,b)=>a+b,0):
+      m.label==='ER รวม'?er17.reduce((a,b)=>a+b,0):
+      m.label==='ยอดนัดปฐมภูมิ'?sch17.reduce((a,b)=>a+b,0):
+      m.label==='ฉีดยา'?inj17.reduce((a,b)=>a+b,0):
+      wTotal17.reduce((a,b)=>a+b,0);
+    const ppdWD = wdTotal>0?+(totalVisitsAll/wdTotal).toFixed(1):'—';
+    tHtml+=`<tr><td>${m.label}</td><td>${m.s.mean.toLocaleString()}</td><td>±${m.s.sd.toLocaleString()}</td><td>${m.s.cv}%</td><td class="cell-best">${m.s.min.toLocaleString()}</td><td>${MONTHS[m.worst]||'—'}</td><td class="cell-worst">${m.s.max.toLocaleString()}</td><td>${MONTHS[m.best]||'—'}</td><td>${ppdWD}</td></tr>`;
+  });
+  tHtml+='</tbody>';
+  document.getElementById('monthlyStatsTable').innerHTML=tHtml;
+}
+
+// ========== QUARTERLY STATS ==========
+function buildQuarterlyStats() {
+  // Thai fiscal year quarters: Q1=ต.ค.–ธ.ค., Q2=ม.ค.–มี.ค., Q3=เม.ย.–มิ.ย., Q4=ก.ค.–ก.ย.
+  // FY2566: idx 0-11 | FY2567: idx 12-23 | FY2568: idx 24-35 | FY2569: idx 36-42 (7 months, excl. partial idx 43)
+  const qDef = [
+    {label:'Q1 (ต.ค.–ธ.ค.)', fy66:[0,1,2],   fy67:[12,13,14], fy68:[24,25,26], fy69:[36,37,38]},
+    {label:'Q2 (ม.ค.–มี.ค.)', fy66:[3,4,5],   fy67:[15,16,17], fy68:[27,28,29], fy69:[39,40,41]},
+    {label:'Q3 (เม.ย.–มิ.ย.)', fy66:[6,7,8],  fy67:[18,19,20], fy68:[30,31,32], fy69:[42]},
+    {label:'Q4 (ก.ค.–ก.ย.)', fy66:[9,10,11],  fy67:[21,22,23], fy68:[33,34,35], fy69:[]},
+  ];
+  function sumQ(arr, idxArr){ return idxArr.reduce((s,i)=>s+(arr[i]||0),0); }
+
+  const tv=DATA.totalVisits, er=DATA.erTotal, sch=DATA.scheduled;
+  const fy66sums=qDef.map(q=>sumQ(tv,q.fy66));
+  const fy67sums=qDef.map(q=>sumQ(tv,q.fy67));
+  const fy68sums=qDef.map(q=>sumQ(tv,q.fy68));
+  const fy69sums=qDef.map(q=>sumQ(tv,q.fy69));
+  const fy66er=qDef.map(q=>sumQ(er,q.fy66));
+  const fy67er=qDef.map(q=>sumQ(er,q.fy67));
+  const fy68er=qDef.map(q=>sumQ(er,q.fy68));
+  const fy69er=qDef.map(q=>sumQ(er,q.fy69));
+  const fy68sch=qDef.map(q=>sumQ(sch,q.fy68));
+  const fy69sch=qDef.map(q=>sumQ(sch,q.fy69));
+
+  const fy68total=fy68sums.reduce((a,b)=>a+b,0);
+  const bestQ=fy68sums.indexOf(Math.max(...fy68sums));
+
+  document.getElementById('qtrKPI').innerHTML=`
+    <div class="stat-mini"><div class="stat-mini-val">${fy68sums[bestQ].toLocaleString()}</div><div class="stat-mini-label">🏆 ไตรมาสสูงสุด FY68</div><div class="stat-mini-sub">${qDef[bestQ].label}</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${(fy68er[0]/fy68sums[0]*100).toFixed(1)}%</div><div class="stat-mini-label">%ER Q1 FY68</div><div class="stat-mini-sub">ก่อนเปลี่ยนระบบ</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${fy69sums[0]?(fy69er[0]/fy69sums[0]*100).toFixed(1)+'%':'—'}</div><div class="stat-mini-label">%ER Q1 FY69</div><div class="stat-mini-sub">หลังเปลี่ยนระบบ</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${fy69sums[0]?((fy69sums[0]-fy68sums[0])/fy68sums[0]*100).toFixed(1)+'%':'—'}</div><div class="stat-mini-label">Q1: FY69 vs FY68</div><div class="stat-mini-sub">เปลี่ยนแปลงยอดรวม</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${((fy68sums[0]-fy66sums[0])/fy66sums[0]*100).toFixed(1)}%</div><div class="stat-mini-label">Q1: FY68 vs FY66</div><div class="stat-mini-sub">การเติบโต 2 ปี</div></div>
+  `;
+
+  new Chart(document.getElementById('qtrTotalChart'),{
+    type:'bar',
+    data:{labels:qDef.map(q=>q.label),
+      datasets:[
+        {label:'ปีงบ 2566',data:fy66sums,backgroundColor:'rgba(251,191,36,0.4)',borderColor:'#f59e0b',borderWidth:1.5},
+        {label:'ปีงบ 2567',data:fy67sums,backgroundColor:'rgba(16,185,129,0.4)',borderColor:'#10b981',borderWidth:1.5},
+        {label:'ปีงบ 2568',data:fy68sums,backgroundColor:'rgba(59,130,246,0.5)',borderColor:'#3b82f6',borderWidth:1.5},
+        {label:'ปีงบ 2569 (บางส่วน)',data:fy69sums,backgroundColor:'rgba(139,92,246,0.4)',borderColor:'#8b5cf6',borderWidth:1.5},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:12}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},callback:v=>v.toLocaleString()},beginAtZero:true}}}
+  });
+
+  const erPct66=fy66sums.map((v,i)=>v>0?+(fy66er[i]/v*100).toFixed(1):0);
+  const erPct67=fy67sums.map((v,i)=>v>0?+(fy67er[i]/v*100).toFixed(1):0);
+  const erPct68=fy68sums.map((v,i)=>v>0?+(fy68er[i]/v*100).toFixed(1):0);
+  const erPct69=fy69sums.map((v,i)=>v>0?+(fy69er[i]/v*100).toFixed(1):null);
+  new Chart(document.getElementById('qtrErPctChart'),{
+    type:'bar',
+    data:{labels:qDef.map(q=>q.label),
+      datasets:[
+        {label:'%ER FY66',data:erPct66,backgroundColor:'rgba(251,191,36,0.5)',borderColor:'#f59e0b',borderWidth:1.5},
+        {label:'%ER FY67',data:erPct67,backgroundColor:'rgba(16,185,129,0.5)',borderColor:'#10b981',borderWidth:1.5},
+        {label:'%ER FY68',data:erPct68,backgroundColor:'rgba(239,68,68,0.4)',borderColor:'#ef4444',borderWidth:1.5},
+        {label:'%ER FY69',data:erPct69,backgroundColor:'rgba(239,68,68,0.7)',borderColor:'#b91c1c',borderWidth:1.5},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:12}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},callback:v=>v+'%'},beginAtZero:true,max:40}}}
+  });
+
+  let tHtml='<thead><tr><th>ไตรมาส</th><th>FY66</th><th>FY67</th><th>FY68</th><th>%ER FY68</th><th>FY69 (บางส่วน)</th><th>%ER FY69</th><th>Δ FY68 vs FY66</th><th>Δ FY69 vs FY68</th></tr></thead><tbody>';
+  qDef.forEach((q,i)=>{
+    const d66=fy66sums[i], d67=fy67sums[i], d68=fy68sums[i], d69=fy69sums[i];
+    const e68=fy68er[i], e69=fy69er[i];
+    const delta6668 = d66&&d68?((d68-d66)/d66*100).toFixed(1):null;
+    const delta6869 = d68&&d69?((d69-d68)/d68*100).toFixed(1):null;
+    const cls = i===bestQ?'s-best':'';
+    tHtml+=`<tr class="${cls}"><td>${q.label}</td>
+      <td>${d66.toLocaleString()}</td>
+      <td>${d67.toLocaleString()}</td>
+      <td>${d68.toLocaleString()}</td>
+      <td>${erPct68[i]}%</td>
+      <td>${d69?d69.toLocaleString():'—'}</td>
+      <td>${erPct69[i]?erPct69[i]+'%':'—'}</td>
+      <td class="${delta6668?+(delta6668)>=0?'cell-worst':'cell-best':''}">${delta6668?(+delta6668>=0?'▲+':'▼')+delta6668+'%':'—'}</td>
+      <td class="${delta6869?+(delta6869)>=0?'cell-worst':'cell-best':''}">${delta6869?(+delta6869>=0?'▲+':'▼')+delta6869+'%':'—'}</td>
+    </tr>`;
+  });
+  const fy68erPctTot=(fy68er.reduce((a,b)=>a+b,0)/fy68total*100).toFixed(1);
+  tHtml+=`<tr class="s-total"><td>รวม FY68</td><td>${fy66sums.reduce((a,b)=>a+b,0).toLocaleString()}</td><td>${fy67sums.reduce((a,b)=>a+b,0).toLocaleString()}</td><td>${fy68total.toLocaleString()} | ER ${fy68er.reduce((a,b)=>a+b,0).toLocaleString()} (${fy68erPctTot}%)</td><td colspan="5">FY69 ยังไม่สมบูรณ์ (7 เดือน: ต.ค.68–เม.ย.69)</td></tr>`;
+  tHtml+='</tbody>';
+  document.getElementById('qtrTable').innerHTML=tHtml;
+}
+
+// ========== ANNUAL STATS ==========
+function buildAnnualStats() {
+  // FY2566: idx 0-11  | FY2567: idx 12-23 | FY2568: idx 24-35 | FY2569: idx 36-42 (7 months, excl partial idx 43)
+  const fy69_n=7, fy_full=12;
+  function sum(arr,s,e){return arr.slice(s,e).reduce((a,b)=>a+b,0);}
+
+  // FY2566
+  const fy66tv=sum(DATA.totalVisits,0,12),   fy66er=sum(DATA.erTotal,0,12);
+  const fy66sch=sum(DATA.scheduled,0,12),    fy66inj=sum(DATA.injections,0,12);
+  const fy66np=sum(DATA.npExam,0,12);
+  const fy66wound=sum(DATA.woundLarge,0,12)+sum(DATA.woundMedium,0,12)+sum(DATA.woundSmall,0,12);
+
+  // FY2567
+  const fy67tv=sum(DATA.totalVisits,12,24),  fy67er=sum(DATA.erTotal,12,24);
+  const fy67sch=sum(DATA.scheduled,12,24),   fy67inj=sum(DATA.injections,12,24);
+  const fy67np=sum(DATA.npExam,12,24);
+  const fy67wound=sum(DATA.woundLarge,12,24)+sum(DATA.woundMedium,12,24)+sum(DATA.woundSmall,12,24);
+
+  // FY2568
+  const fy68tv=sum(DATA.totalVisits,24,36),  fy68er=sum(DATA.erTotal,24,36);
+  const fy68sch=sum(DATA.scheduled,24,36),   fy68inj=sum(DATA.injections,24,36);
+  const fy68np=sum(DATA.npExam,24,36);
+  const fy68wound=sum(DATA.woundLarge,24,36)+sum(DATA.woundMedium,24,36)+sum(DATA.woundSmall,24,36);
+
+  // FY2569 (7 months: ต.ค.68–เม.ย.69, idx 36-42, excl partial idx 43)
+  const fy69tv=sum(DATA.totalVisits,36,43),  fy69er=sum(DATA.erTotal,36,43);
+  const fy69sch=sum(DATA.scheduled,36,43),   fy69inj=sum(DATA.injections,36,43);
+  const fy69np=sum(DATA.npExam,36,43);
+  const fy69wound=sum(DATA.woundLarge,36,43)+sum(DATA.woundMedium,36,43)+sum(DATA.woundSmall,36,43);
+
+  // Projected FY2569 full-year (linear from 5 months)
+  const proj = v => Math.round(v/fy69_n*fy_full);
+  const fy69tvP=proj(fy69tv), fy69erP=proj(fy69er), fy69schP=proj(fy69sch);
+  const erGrowth=((fy69erP-fy68er)/fy68er*100).toFixed(1);
+  const tvGrowth=((fy69tvP-fy68tv)/fy68tv*100).toFixed(1);
+  const tv6668=((fy68tv-fy66tv)/fy66tv*100).toFixed(1);
+
+  document.getElementById('annualKPI').innerHTML=`
+    <div class="stat-mini"><div class="stat-mini-val">${fy66tv.toLocaleString()}</div><div class="stat-mini-label">ปีงบ 2566</div><div class="stat-mini-sub">ER ${(fy66er/fy66tv*100).toFixed(1)}%</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${fy67tv.toLocaleString()}</div><div class="stat-mini-label">ปีงบ 2567</div><div class="stat-mini-sub">ER ${(fy67er/fy67tv*100).toFixed(1)}%</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${fy68tv.toLocaleString()}</div><div class="stat-mini-label">ปีงบ 2568</div><div class="stat-mini-sub">ER ${(fy68er/fy68tv*100).toFixed(1)}% | ↑${tv6668}% vs FY66</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${fy69tv.toLocaleString()}</div><div class="stat-mini-label">ปีงบ 2569 สะสม</div><div class="stat-mini-sub">7 เดือน (ต.ค.68–เม.ย.69)</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${fy69tvP.toLocaleString()}</div><div class="stat-mini-label">FY69 ฉายภาพ</div><div class="stat-mini-sub">${tvGrowth}% YoY vs FY68</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${fy69erP.toLocaleString()}</div><div class="stat-mini-label">🚨 ER ฉายภาพ FY69</div><div class="stat-mini-sub">${erGrowth}% จาก FY68</div></div>
+  `;
+
+  new Chart(document.getElementById('annualCompChart'),{
+    type:'bar',
+    data:{
+      labels:['ยอดบริการรวม','ER','ยอดนัด','ฉีดยา','ทำแผล','NP ตรวจ'],
+      datasets:[
+        {label:'FY2566',data:[fy66tv,fy66er,fy66sch,fy66inj,fy66wound,fy66np],backgroundColor:'rgba(251,191,36,0.4)',borderColor:'#f59e0b',borderWidth:1.5},
+        {label:'FY2567',data:[fy67tv,fy67er,fy67sch,fy67inj,fy67wound,fy67np],backgroundColor:'rgba(16,185,129,0.4)',borderColor:'#10b981',borderWidth:1.5},
+        {label:'FY2568 (จริง)',data:[fy68tv,fy68er,fy68sch,fy68inj,fy68wound,fy68np],backgroundColor:'rgba(59,130,246,0.5)',borderColor:'#3b82f6',borderWidth:1.5},
+        {label:'FY2569 (ฉายภาพ)',data:[fy69tvP,fy69erP,fy69schP,proj(fy69inj),proj(fy69wound),proj(fy69np)],backgroundColor:'rgba(249,115,22,0.5)',borderColor:'#f97316',borderWidth:1.5},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:12}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},callback:v=>v.toLocaleString()},beginAtZero:true}}}
+  });
+
+  new Chart(document.getElementById('annualTrendChart'),{
+    type:'line',
+    data:{
+      labels:['FY2566','FY2567','FY2568','FY2569 (ฉายภาพ)'],
+      datasets:[
+        {label:'ยอดบริการรวม',data:[fy66tv,fy67tv,fy68tv,fy69tvP],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',pointRadius:6,tension:0.3,fill:true},
+        {label:'ER',data:[fy66er,fy67er,fy68er,fy69erP],borderColor:'#ef4444',pointRadius:6,tension:0.3,fill:false,borderDash:[4,2]},
+        {label:'ยอดนัด',data:[fy66sch,fy67sch,fy68sch,fy69schP],borderColor:'#10b981',pointRadius:6,tension:0.3,fill:false},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:12}}},
+      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:9},callback:v=>v.toLocaleString()},beginAtZero:true}}}
+  });
+
+  const rows=[
+    {label:'ยอดบริการรวม',fy66:fy66tv,fy67:fy67tv,fy68:fy68tv,fy69act:fy69tv,fy69p:fy69tvP,unit:'ราย'},
+    {label:'↳ ER รวม',fy66:fy66er,fy67:fy67er,fy68:fy68er,fy69act:fy69er,fy69p:fy69erP,unit:'ครั้ง'},
+    {label:'↳ % ER',fy66:+(fy66er/fy66tv*100).toFixed(1),fy67:+(fy67er/fy67tv*100).toFixed(1),fy68:+(fy68er/fy68tv*100).toFixed(1),fy69act:+(fy69er/fy69tv*100).toFixed(1),fy69p:+(fy69erP/fy69tvP*100).toFixed(1),unit:'%',noGrowth:true},
+    {label:'ยอดนัดปฐมภูมิ',fy66:fy66sch,fy67:fy67sch,fy68:fy68sch,fy69act:fy69sch,fy69p:fy69schP,unit:'ราย'},
+    {label:'ฉีดยา',fy66:fy66inj,fy67:fy67inj,fy68:fy68inj,fy69act:fy69inj,fy69p:proj(fy69inj),unit:'ครั้ง'},
+    {label:'ทำแผล (รวม)',fy66:fy66wound,fy67:fy67wound,fy68:fy68wound,fy69act:fy69wound,fy69p:proj(fy69wound),unit:'ครั้ง'},
+    {label:'ตรวจโดย NP',fy66:fy66np,fy67:fy67np,fy68:fy68np,fy69act:fy69np,fy69p:proj(fy69np),unit:'ครั้ง'},
+  ];
+  let tHtml='<thead><tr><th>ตัวชี้วัด</th><th>FY2566 (12 เดือน)</th><th>FY2567 (12 เดือน)</th><th>FY2568 (12 เดือน)</th><th>เฉลี่ย/เดือน FY68</th><th>FY2569 สะสม (7 เดือน)</th><th>FY2569 ฉายภาพ</th><th>Δ FY68 vs FY66</th><th>Δ FY69 vs FY68</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    const g6668 = r.noGrowth ? null : ((r.fy68-r.fy66)/r.fy66*100).toFixed(1);
+    const g6869 = r.noGrowth ? null : ((r.fy69p-r.fy68)/r.fy68*100).toFixed(1);
+    const c6668 = g6668?(+g6668>=0?'cell-worst':'cell-best'):'';
+    const c6869 = g6869?(+g6869>=0?'cell-worst':'cell-best'):'';
+    const t6668 = g6668?(+g6668>=0?`▲ +${g6668}%`:`▼ ${g6668}%`):'—';
+    const t6869 = g6869?(+g6869>=0?`▲ +${g6869}%`:`▼ ${g6869}%`):'—';
+    const isER = r.label.includes('ER') && !r.label.includes('%');
+    tHtml+=`<tr${isER?' class="s-worst"':''}><td>${r.label}</td>
+      <td>${r.fy66.toLocaleString()} ${r.unit}</td>
+      <td>${r.fy67.toLocaleString()} ${r.unit}</td>
+      <td>${r.fy68.toLocaleString()} ${r.unit}</td>
+      <td>${r.noGrowth?'—':Math.round(r.fy68/12).toLocaleString()+' '+r.unit}</td>
+      <td>${r.fy69act.toLocaleString()} ${r.unit}</td>
+      <td>${r.fy69p.toLocaleString()} ${r.unit}</td>
+      <td class="${c6668}">${t6668}</td>
+      <td class="${c6869}">${t6869}</td>
+    </tr>`;
+  });
+  tHtml+='</tbody>';
+  document.getElementById('annualTable').innerHTML=tHtml;
+}
+
+// ========== TAB SWITCH (Forecast) ==========
+window.switchForecastTab = function(btn, panelId) {
+  document.querySelectorAll('#forecastNavBar .stats-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.forecast-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+};
+
+// ========== FORECASTING & TRENDS ==========
+function buildForecast() {
+  const tv = DATA.totalVisits;
+  const er = DATA.erTotal;
+  const sch = DATA.scheduled;
+  const N = LAST_IDX + 1; // 43 months
+
+  // New-system data: ส.ค.68 (idx 34) onwards
+  const NS = 34;
+  const nsTV  = tv.slice(NS, N);   // 9 months
+  const nsER  = er.slice(NS, N);
+  const nsSch = sch.slice(NS, N);
+  const nsWD  = WORKING_DAYS.slice(NS, N);
+  const nsMon = MONTHS.slice(NS, N);
+
+  // Future labels & estimated working days
+  const futLabels = ['พ.ค.69','มิ.ย.69','ก.ค.69','ส.ค.69','ก.ย.69','ต.ค.70'];
+  const futWD     = [22, 21, 22, 20, 22, 20];
+
+  // ─── Moving Average ───
+  function maLast(data, w) {
+    const sl = data.slice(-Math.min(w, data.length));
+    return Math.round(sl.reduce((a,b)=>a+b,0)/sl.length);
+  }
+  const ma3val = maLast(nsTV, 3);
+  const ma6val = maLast(nsTV, 6);
+
+  // Historical moving avg
+  function histMA(data, w) {
+    return data.map((v,i)=>{
+      if (i<w-1) return null;
+      const sl = data.slice(i-w+1,i+1);
+      return Math.round(sl.reduce((a,b)=>a+b,0)/sl.length);
+    });
+  }
+
+  // ─── Holt's Double Exponential Smoothing ───
+  function holt(data, alpha=0.3, beta=0.1, n=6) {
+    let L=data[0], T=data[1]-data[0];
+    for (let i=1;i<data.length;i++) {
+      const Lp=L;
+      L = alpha*data[i]+(1-alpha)*(L+T);
+      T = beta*(L-Lp)+(1-beta)*T;
+    }
+    return { forecasts: Array.from({length:n},(_,h)=>Math.max(0,Math.round(L+(h+1)*T))), L:Math.round(L), T:+T.toFixed(1) };
+  }
+  const esTV  = holt(nsTV,  0.30, 0.10);
+  const esER  = holt(nsER,  0.35, 0.10);
+  const esSch = holt(nsSch, 0.30, 0.10);
+
+  const numFut = 6;
+  const allLabels = [...nsMon, ...futLabels];
+
+  // ─── KPI Cards ───
+  const nsAvg = Math.round(nsTV.reduce((a,b)=>a+b,0)/nsTV.length);
+  const nsERAvg = Math.round(nsER.reduce((a,b)=>a+b,0)/nsER.length);
+  const nsERPct = (nsERAvg/nsAvg*100).toFixed(1);
+  const trendLabel = esTV.T>=0 ? `↑ +${esTV.T.toFixed(0)} ราย/เดือน` : `↓ ${Math.abs(esTV.T).toFixed(0)} ราย/เดือน`;
+  const trendColor = esTV.T>=0 ? '#ef4444' : '#10b981';
+  document.getElementById('forecastKPI').innerHTML = `
+    <div class="forecast-kpi"><div class="forecast-kpi-val">${nsAvg.toLocaleString()}</div><div class="forecast-kpi-label">เฉลี่ย/เดือน (9 เดือน)</div></div>
+    <div class="forecast-kpi"><div class="forecast-kpi-val">${ma3val.toLocaleString()}</div><div class="forecast-kpi-label">3MA ล่าสุด (พยากรณ์คงที่)</div></div>
+    <div class="forecast-kpi"><div class="forecast-kpi-val">${ma6val.toLocaleString()}</div><div class="forecast-kpi-label">6MA ล่าสุด</div></div>
+    <div class="forecast-kpi highlight"><div class="forecast-kpi-val">${esTV.forecasts[0].toLocaleString()}</div><div class="forecast-kpi-label">Holt ES คาดการณ์ พ.ค.69</div></div>
+    <div class="forecast-kpi"><div class="forecast-kpi-val" style="color:${trendColor};font-size:1rem">${trendLabel}</div><div class="forecast-kpi-label">แนวโน้มปัจจุบัน (ES Trend)</div></div>
+    <div class="forecast-kpi"><div class="forecast-kpi-val">${nsERPct}%</div><div class="forecast-kpi-label">%ER เฉลี่ย (9 เดือน)</div></div>
+  `;
+
+  // ─── Forecast Chart (Total) ───
+  const histD  = [...nsTV, ...Array(numFut).fill(null)];
+  const hma3D  = [...histMA(nsTV,3), ...Array(numFut).fill(null)];
+  const hma6D  = [...histMA(nsTV,6), ...Array(numFut).fill(null)];
+  const ma3D   = [...Array(nsTV.length).fill(null), ...Array(numFut).fill(ma3val)];
+  const ma6D   = [...Array(nsTV.length).fill(null), ...Array(numFut).fill(ma6val)];
+  const esD    = [...Array(nsTV.length).fill(null), ...esTV.forecasts];
+
+  new Chart(document.getElementById('forecastChart'), {
+    type:'line',
+    data:{ labels:allLabels, datasets:[
+      { label:'ยอดจริง', data:histD, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.12)', fill:true, tension:0.3, pointRadius:5, borderWidth:2.5 },
+      { label:'3MA ต่อเนื่อง', data:hma3D, borderColor:'#10b981', borderDash:[3,2], borderWidth:1.5, pointRadius:0, tension:0.3 },
+      { label:'พยากรณ์ 3MA', data:ma3D, borderColor:'#10b981', borderDash:[7,4], borderWidth:2, pointRadius:5, pointStyle:'triangle', tension:0 },
+      { label:'พยากรณ์ 6MA', data:ma6D, borderColor:'#8b5cf6', borderDash:[5,3], borderWidth:2, pointRadius:5, pointStyle:'rectRot', tension:0 },
+      { label:'พยากรณ์ Holt ES', data:esD, borderColor:'#f97316', borderDash:[5,3], borderWidth:2.5, pointRadius:6, pointStyle:'star', tension:0.2 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{labels:{font:{size:10},boxWidth:14}},
+        tooltip:{ callbacks:{ label: ctx => ctx.parsed.y!=null?`${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} ราย`:'' } }
+      },
+      scales:{ x:{ticks:{font:{size:9},maxRotation:45}}, y:{ticks:{font:{size:10},callback:v=>v.toLocaleString()},min:3000} }
+    }
+  });
+
+  // ─── ER Forecast Chart ───
+  const histER = [...nsER, ...Array(numFut).fill(null)];
+  const esDer  = [...Array(nsTV.length).fill(null), ...esER.forecasts];
+  const erPctHist = nsER.map((v,i)=>nsTV[i]>0?+(v/nsTV[i]*100).toFixed(1):null);
+  const erPctFut  = esER.forecasts.map((v,i)=>esTV.forecasts[i]>0?+(v/esTV.forecasts[i]*100).toFixed(1):null);
+  const erPctAll  = [...erPctHist.map(v=>v), ...Array(numFut).fill(null)];
+  const erPctFutAll = [...Array(nsTV.length).fill(null), ...erPctFut];
+
+  new Chart(document.getElementById('forecastERChart'), {
+    data:{ labels:allLabels, datasets:[
+      { type:'bar', label:'ER จริง', data:histER, backgroundColor:'rgba(239,68,68,0.5)', borderColor:'#ef4444', borderWidth:1.5, yAxisID:'y' },
+      { type:'bar', label:'ER คาดการณ์ (ES)', data:esDer, backgroundColor:'rgba(249,115,22,0.5)', borderColor:'#f97316', borderWidth:2, yAxisID:'y' },
+      { type:'line', label:'%ER จริง', data:erPctAll, borderColor:'#8b5cf6', fill:false, tension:0.3, pointRadius:3, yAxisID:'y2' },
+      { type:'line', label:'%ER คาดการณ์', data:erPctFutAll, borderColor:'#f59e0b', borderDash:[5,3], fill:false, tension:0.3, pointRadius:4, yAxisID:'y2' },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{labels:{font:{size:10},boxWidth:12}},
+        tooltip:{ callbacks:{ label: ctx => {
+          if (ctx.parsed.y==null) return '';
+          const isLine = ctx.dataset.yAxisID==='y2';
+          return `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}${isLine?'%':' ราย'}`;
+        }}}
+      },
+      scales:{ x:{ticks:{font:{size:9},maxRotation:45}},
+        y:{position:'left',ticks:{font:{size:10},callback:v=>v.toLocaleString()},beginAtZero:true},
+        y2:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:9},callback:v=>v+'%'},beginAtZero:true,max:40}
+      }
+    }
+  });
+
+  // ─── Forecast Table ───
+  let fHtml = `<thead><tr><th>เดือน</th><th>วันทำการ*</th><th>3MA</th><th>6MA</th><th>Holt ES</th><th>ER คาดการณ์</th><th>%ER</th><th>เฉลี่ย/วันทำการ</th><th>ยอดนัด คาดการณ์</th></tr></thead><tbody>`;
+  futLabels.forEach((m,i)=>{
+    const esv=esTV.forecasts[i], erv=esER.forecasts[i], schv=esSch.forecasts[i];
+    const erp=esv>0?(erv/esv*100).toFixed(1):'—';
+    const ppd=futWD[i]>0?Math.round(esv/futWD[i]).toLocaleString():'—';
+    fHtml+=`<tr><td style="font-weight:700;color:#1e3a5f">${m}</td><td>${futWD[i]}</td>
+      <td>${ma3val.toLocaleString()}</td><td>${ma6val.toLocaleString()}</td>
+      <td style="color:#f97316;font-weight:700">${esv.toLocaleString()}</td>
+      <td style="color:#ef4444">${erv.toLocaleString()} <span class="pct-badge red">${erp}%</span></td>
+      <td>${erp}%</td><td>${ppd}</td><td>${schv.toLocaleString()}</td></tr>`;
+  });
+  fHtml+='</tbody>';
+  document.getElementById('forecastTable').innerHTML=fHtml;
+
+  // ─── Forecast Narrative ───
+  const lastActual=nsTV[nsTV.length-1];
+  const lastMon=nsMon[nsMon.length-1];
+  const chg=((esTV.forecasts[0]-lastActual)/lastActual*100).toFixed(1);
+  const avgForecast=Math.round(esTV.forecasts.reduce((a,b)=>a+b,0)/numFut);
+  document.getElementById('forecastNarrative').innerHTML=`
+    <strong>🔍 บทวิเคราะห์การพยากรณ์ (อัพเดท: ${new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})})</strong>
+    <ul>
+      <li><strong>ฐานข้อมูล:</strong> ระบบใหม่ 9 เดือน (${nsMon[0]}–${lastMon}) เฉลี่ย ${nsAvg.toLocaleString()} ราย/เดือน | ER เฉลี่ย ${nsERAvg.toLocaleString()} ราย/เดือน (${nsERPct}%)</li>
+      <li><strong>3MA (${ma3val.toLocaleString()} ราย):</strong> เฉลี่ย 3 เดือนหลังสุด — เหมาะสำหรับวางแผนระยะสั้น 1–2 เดือน</li>
+      <li><strong>Holt ES แนวโน้ม:</strong> ${esTV.T>=0?'⬆ เพิ่ม':'⬇ ลด'} ~${Math.abs(esTV.T).toFixed(0)} ราย/เดือน → คาดการณ์ ${futLabels[0]}: <strong>${esTV.forecasts[0].toLocaleString()}</strong> ราย (${+chg>=0?'+':''}${chg}% จาก${lastMon})</li>
+      <li><strong>ER คาดการณ์ (6 เดือน):</strong> ${esER.forecasts[0].toLocaleString()}–${esER.forecasts[numFut-1].toLocaleString()} ราย/เดือน — %ER ยังสูง ~${((esER.forecasts[0]/esTV.forecasts[0])*100).toFixed(1)}% ต้องการกำลัง ER เพิ่ม</li>
+      <li><strong>แผนกำลังพล:</strong> เตรียมรองรับ ~${avgForecast.toLocaleString()} ราย/เดือน เฉลี่ย (${futLabels[0]}–${futLabels[numFut-1]}) | ต่อวันทำการ ~${Math.round(avgForecast/21).toLocaleString()} ราย/วัน</li>
+      <li><strong>ข้อจำกัด:</strong> โมเดลนี้ยังไม่รวม Seasonal Adjustment (Songkran, เทศกาล) — เดือน เม.ย. อาจต่ำกว่าคาด ~10–15% ควรปรับทุกสัปดาห์เมื่อมีข้อมูลใหม่</li>
+    </ul>`;
+
+  // ════════════════════════════════════════
+  // ─── SEASONAL PATTERN ───
+  const fyML = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
+  const fy66 = tv.slice(0,12), fy67=tv.slice(12,24), fy68=tv.slice(24,36);
+  const er66=er.slice(0,12), er67=er.slice(12,24), er68=er.slice(24,36);
+
+  const fy67avg = fy67.reduce((a,b)=>a+b,0)/12;
+  const seasonIdx = fy67.map(v=>+(v/fy67avg*100).toFixed(1));
+  const fy6667avg = fy67.map((v,i)=>Math.round((fy66[i]+v)/2));
+
+  const peakI=seasonIdx.indexOf(Math.max(...seasonIdx));
+  const troughI=seasonIdx.indexOf(Math.min(...seasonIdx));
+
+  // Seasonal KPI
+  document.getElementById('seasonalKPI').innerHTML=`
+    <div class="stat-mini"><div class="stat-mini-val" style="color:#ef4444">${fyML[peakI]}</div><div class="stat-mini-label">🔴 Peak Month (FY67)</div><div class="stat-mini-sub">Seasonal Index = ${seasonIdx[peakI]}%</div></div>
+    <div class="stat-mini"><div class="stat-mini-val" style="color:#10b981">${fyML[troughI]}</div><div class="stat-mini-label">🟢 Low Season (FY67)</div><div class="stat-mini-sub">Seasonal Index = ${seasonIdx[troughI]}%</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${fy67avg.toFixed(0)}</div><div class="stat-mini-label">เฉลี่ย/เดือน FY67</div><div class="stat-mini-sub">ฐานอ้างอิง Seasonal Index</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${Math.round(fy68.reduce((a,b)=>a+b,0)/12).toLocaleString()}</div><div class="stat-mini-label">เฉลี่ย/เดือน FY68</div><div class="stat-mini-sub">ระบบบันทึกผสม</div></div>
+  `;
+
+  new Chart(document.getElementById('seasonalChart'),{
+    type:'bar',
+    data:{ labels:fyML, datasets:[
+      {label:'FY66+67 เฉลี่ย',data:fy6667avg,backgroundColor:'rgba(59,130,246,0.4)',borderColor:'#3b82f6',borderWidth:1.5},
+      {label:'FY68 จริง',data:fy68,backgroundColor:'rgba(16,185,129,0.5)',borderColor:'#10b981',borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} ราย`}}},
+      scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9},callback:v=>v.toLocaleString()},beginAtZero:true}}
+    }
+  });
+
+  new Chart(document.getElementById('seasonalIndexChart'),{
+    type:'bar',
+    data:{ labels:fyML, datasets:[
+      {label:'Seasonal Index (%)',data:seasonIdx,
+       backgroundColor:seasonIdx.map(v=>v>=110?'rgba(239,68,68,0.6)':v<=90?'rgba(16,185,129,0.6)':'rgba(59,130,246,0.4)'),
+       borderColor:seasonIdx.map(v=>v>=110?'#ef4444':v<=90?'#10b981':'#3b82f6'),borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Seasonal Index: ${ctx.parsed.y}% (${ctx.parsed.y>100?'+':''}${(ctx.parsed.y-100).toFixed(1)}% จากค่าเฉลี่ย)`}}},
+      scales:{x:{ticks:{font:{size:10}}},
+        y:{ticks:{font:{size:9},callback:v=>v+'%'},min:60,max:160,
+          grid:{color:(ctx)=>ctx.tick.value===100?'rgba(0,0,0,0.4)':'rgba(0,0,0,0.05)'}
+        }
+      }
+    }
+  });
+
+  // Seasonal Table
+  let sHtml=`<thead><tr><th>เดือน</th><th>FY66</th><th>FY67</th><th>FY68</th><th>FY66+67 เฉลี่ย</th><th>Seasonal Index (FY67)</th><th>ER FY67</th><th>%ER FY67</th><th>ลักษณะฤดูกาล</th></tr></thead><tbody>`;
+  const fyCharDesc=['🍂 ต้นปีงบ','—','🎄 วันหยุดยาว','—','—','☀️ ร้อน','🌸 สงกรานต์↓OPD','☀️ ร้อน Peak','—','🌧️ ฝน','🌧️ ฝน','—'];
+  fyML.forEach((m,i)=>{
+    const isBest=i===peakI,isLow=i===troughI;
+    const erp=fy67[i]>0?(er67[i]/fy67[i]*100).toFixed(1):'—';
+    sHtml+=`<tr class="${isBest?'s-best':isLow?'s-worst':''}">
+      <td>${m}</td><td>${fy66[i].toLocaleString()}</td><td>${fy67[i].toLocaleString()}</td><td>${fy68[i].toLocaleString()}</td>
+      <td>${fy6667avg[i].toLocaleString()}</td>
+      <td style="font-weight:${isBest||isLow?700:400};color:${isBest?'#b91c1c':isLow?'#166534':'inherit'}">${seasonIdx[i]}% <span class="pct-badge ${isBest?'red':isLow?'green':''}">${isBest||isLow?(seasonIdx[i]>100?'+':'')+(seasonIdx[i]-100).toFixed(1)+'%':''}</span></td>
+      <td>${er67[i].toLocaleString()}</td><td>${erp}%</td>
+      <td style="font-size:0.75rem;color:#6b7280">${fyCharDesc[i]}</td>
+    </tr>`;
+  });
+  sHtml+='</tbody>';
+  document.getElementById('seasonalTable').innerHTML=sHtml;
+
+  document.getElementById('seasonalNarrative').innerHTML=`
+    <strong>🔍 บทวิเคราะห์ Seasonal Pattern (อ้างอิง FY67 ระบบเดิม)</strong>
+    <ul>
+      <li><strong>Peak Season: ${fyML[peakI]}</strong> (Index = ${seasonIdx[peakI]}%) — สูงกว่าค่าเฉลี่ย ${(seasonIdx[peakI]-100).toFixed(1)}% ควรเตรียมบุคลากรเสริมล่วงหน้า 1–2 เดือน</li>
+      <li><strong>Low Season: ${fyML[troughI]}</strong> (Index = ${seasonIdx[troughI]}%) — ต่ำกว่าค่าเฉลี่ย ${(100-seasonIdx[troughI]).toFixed(1)}% เหมาะสำหรับจัดอบรม วันลา และงานคุณภาพ</li>
+      <li><strong>เม.ย. (สงกรานต์):</strong> OPD ลดลงจากวันหยุดยาว 3–4 วัน แต่ ER อาจเพิ่มจากอุบัติเหตุจราจร — วันทำการเพียง 16–18 วัน ต่อวันทำการยังสูง</li>
+      <li><strong>Q3 (เม.ย.–มิ.ย.) FY68:</strong> ยอดรวม 25,206 ราย เฉลี่ย 8,402/เดือน = Peak Quarter เกี่ยวข้องกับโรคระบาดฤดูร้อน (ไข้เลือดออก, โรคทางเดินหายใจ)</li>
+      <li><strong>ข้อจำกัด:</strong> Seasonal Pattern นี้อิง FY67 (ระบบเดิม) FY69 ยังมีข้อมูลแค่ 7 เดือน — ควรอัพเดทเมื่อ FY69 ครบ ก.ย.69</li>
+    </ul>`;
+
+  // ════════════════════════════════════════
+  // ─── YEAR-OVER-YEAR GROWTH ───
+  const g6667 = fy67.map((v,i)=>fy66[i]>0?+((v-fy66[i])/fy66[i]*100).toFixed(1):null);
+  const g6768 = fy68.map((v,i)=>fy67[i]>0?+((v-fy67[i])/fy67[i]*100).toFixed(1):null);
+  // Flag months affected by system change (ก.ค.–ก.ย. = pos 9,10,11)
+  const g6768safe = g6768.map((v,i)=>i>=9?null:v);
+  const erg6667 = er67.map((v,i)=>er66[i]>0?+((v-er66[i])/er66[i]*100).toFixed(1):null);
+  const erg6768 = er68.map((v,i)=>er67[i]>0?+((v-er67[i])/er67[i]*100).toFixed(1):null);
+
+  const validG6667 = g6667.filter(v=>v!=null);
+  const validEG6768 = erg6768.filter(v=>v!=null);
+  const avgG6667 = (validG6667.reduce((a,b)=>a+b,0)/validG6667.length).toFixed(1);
+  const avgEG6768 = (validEG6768.reduce((a,b)=>a+b,0)/validEG6768.length).toFixed(1);
+
+  document.getElementById('yoyKPI').innerHTML=`
+    <div class="stat-mini"><div class="stat-mini-val" style="color:${+avgG6667>=0?'#10b981':'#ef4444'}">${+avgG6667>=0?'+':''}${avgG6667}%</div><div class="stat-mini-label">เฉลี่ย Growth FY67 vs FY66</div><div class="stat-mini-sub">ยอดบริการรวม 12 เดือน</div></div>
+    <div class="stat-mini"><div class="stat-mini-val" style="color:#ef4444">+${avgEG6768}%</div><div class="stat-mini-label">เฉลี่ย ER Growth FY68 vs FY67</div><div class="stat-mini-sub">ทุกเดือน (ER นิยามคงที่)</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${((fy68.reduce((a,b)=>a+b,0)-fy67.reduce((a,b)=>a+b,0))/fy67.reduce((a,b)=>a+b,0)*100).toFixed(1)}%</div><div class="stat-mini-label">ยอดรวม FY68 vs FY67</div><div class="stat-mini-sub">⚠ เปรียบได้เฉพาะ ต.ค.–มิ.ย.</div></div>
+    <div class="stat-mini"><div class="stat-mini-val" style="color:#ef4444">+${((er68.reduce((a,b)=>a+b,0)-er67.reduce((a,b)=>a+b,0))/er67.reduce((a,b)=>a+b,0)*100).toFixed(1)}%</div><div class="stat-mini-label">ER รวม FY68 vs FY67</div><div class="stat-mini-sub">เพิ่มขึ้นทั้งปีงบ</div></div>
+  `;
+
+  new Chart(document.getElementById('yoyChart'),{
+    type:'bar',
+    data:{ labels:fyML, datasets:[
+      {label:'ยอดรวม FY67 vs FY66',data:g6667,backgroundColor:g6667.map(v=>v!=null&&v>=0?'rgba(16,185,129,0.5)':'rgba(239,68,68,0.5)'),borderColor:g6667.map(v=>v!=null&&v>=0?'#10b981':'#ef4444'),borderWidth:1.5},
+      {label:'ยอดรวม FY68 vs FY67 (ต.ค.–มิ.ย.)',data:g6768safe,backgroundColor:g6768safe.map(v=>v===null?'transparent':v>=0?'rgba(59,130,246,0.5)':'rgba(239,68,68,0.4)'),borderColor:g6768safe.map(v=>v===null?'transparent':v>=0?'#3b82f6':'#ef4444'),borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>ctx.parsed.y!=null?`${ctx.dataset.label}: ${ctx.parsed.y>0?'+':''}${ctx.parsed.y}%`:''}}},
+      scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9},callback:v=>v+'%'},beginAtZero:false}}
+    }
+  });
+
+  new Chart(document.getElementById('yoyERChart'),{
+    type:'bar',
+    data:{ labels:fyML, datasets:[
+      {label:'ER Growth FY67 vs FY66',data:erg6667,backgroundColor:erg6667.map(v=>v!=null&&v>=0?'rgba(249,115,22,0.5)':'rgba(16,185,129,0.5)'),borderColor:erg6667.map(v=>v!=null&&v>=0?'#f97316':'#10b981'),borderWidth:1.5},
+      {label:'ER Growth FY68 vs FY67',data:erg6768,backgroundColor:erg6768.map(v=>v!=null&&v>=0?'rgba(239,68,68,0.6)':'rgba(16,185,129,0.5)'),borderColor:erg6768.map(v=>v!=null&&v>=0?'#ef4444':'#10b981'),borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>ctx.parsed.y!=null?`${ctx.dataset.label}: ${ctx.parsed.y>0?'+':''}${ctx.parsed.y}%`:''}}},
+      scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9},callback:v=>v+'%'},beginAtZero:false}}
+    }
+  });
+
+  // YoY Table
+  let yHtml=`<thead><tr><th>เดือน</th><th>FY66</th><th>FY67</th><th>Δ% FY67 vs 66</th><th>FY68</th><th>Δ% FY68 vs 67</th><th>ER FY66</th><th>ER FY67</th><th>Δ% ER 67vs66</th><th>ER FY68</th><th>Δ% ER 68vs67</th></tr></thead><tbody>`;
+  fyML.forEach((m,i)=>{
+    const sysChg=i>=9;
+    const cls = sysChg?'style="opacity:0.7"':'';
+    const g67=g6667[i],g68=g6768[i],eg67=erg6667[i],eg68=erg6768[i];
+    yHtml+=`<tr ${cls}>
+      <td>${m}${sysChg?'<span style="font-size:0.6rem;color:#b45309;margin-left:3px">⚠เปลี่ยนระบบ</span>':''}</td>
+      <td>${fy66[i].toLocaleString()}</td><td>${fy67[i].toLocaleString()}</td>
+      <td class="${g67!=null&&g67>=0?'cell-worst':'cell-best'}">${g67!=null?(g67>=0?'▲+':'')+g67+'%':'—'}</td>
+      <td>${fy68[i].toLocaleString()}</td>
+      <td class="${sysChg?'na-cell':g68!=null&&g68>=0?'cell-worst':'cell-best'}">${sysChg?'⚠ ไม่เปรียบ':g68!=null?(g68>=0?'▲+':'')+g68+'%':'—'}</td>
+      <td>${er66[i].toLocaleString()}</td><td>${er67[i].toLocaleString()}</td>
+      <td class="${eg67!=null&&eg67>=0?'cell-worst':'cell-best'}">${eg67!=null?(eg67>=0?'▲+':'')+eg67+'%':'—'}</td>
+      <td>${er68[i].toLocaleString()}</td>
+      <td class="${eg68!=null&&eg68>=0?'cell-worst':'cell-best'}">${eg68!=null?(eg68>=0?'▲+':'')+eg68+'%':'—'}</td>
+    </tr>`;
+  });
+  yHtml+='</tbody>';
+  document.getElementById('yoyTable').innerHTML=yHtml;
+
+  document.getElementById('yoyNarrative').innerHTML=`
+    <strong>🔍 บทวิเคราะห์ Year-over-Year Growth</strong>
+    <ul>
+      <li><strong>FY67 vs FY66 (12 เดือน, ระบบเดิม):</strong> ยอดรวมเติบโตเฉลี่ย ${+avgG6667>=0?'+':''}${avgG6667}% — เป็น baseline การเติบโตในสภาวะปกติก่อนปรับระบบ</li>
+      <li><strong>FY68 vs FY67 — OPD:</strong> ต.ค.67–มิ.ย.68 (9 เดือน) ยังเปรียบได้ — ยอดรวมเพิ่มจาก OPD ใหม่ + ER ที่เพิ่มมาก; ก.ค.–ก.ย.68 ไม่เปรียบโดยตรง (ระบบเปลี่ยน)</li>
+      <li><strong>ER Growth (ทุกปี):</strong> ER เติบโตเฉลี่ย +${avgEG6768}%/ปี (FY68 vs FY67) — เป็นสัญญาณที่ต้องวางแผนระยะยาว ไม่ใช่แค่ระยะสั้น</li>
+      <li><strong>จุดเปลี่ยนสำคัญ ก.ค.68:</strong> ยอดรวมลดลงอย่างเห็นได้ชัด แต่ ER ยังเพิ่มต่อเนื่อง → สะท้อน Case Mix ที่หนักขึ้น มิใช่งานลดลงจริง</li>
+      <li><strong>แนะนำ:</strong> ใช้ FY69 vs FY68 (ตั้งแต่ ต.ค.68 เป็นต้นไป ระบบเดียวกัน) เป็น benchmark หลักสำหรับการวางแผนงบประมาณปี 2570</li>
+    </ul>`;
+
+  // ════════════════════════════════════════
+  // ─── WORKING DAY ANALYSIS ───
+  const wdN = LAST_IDX+1;
+  const wdArr = WORKING_DAYS.slice(0, wdN);
+  const ppd = tv.slice(0,wdN).map((v,i)=>wdArr[i]>0?+(v/wdArr[i]).toFixed(1):0);
+  const erppd = er.slice(0,wdN).map((v,i)=>wdArr[i]>0?+(v/wdArr[i]).toFixed(1):0);
+
+  // KPI for new system period only
+  const nsWDArr = WORKING_DAYS.slice(NS, wdN);
+  const nsPpd = nsTV.map((v,i)=>nsWDArr[i]>0?+(v/nsWDArr[i]).toFixed(1):0);
+  const nsErppd = nsER.map((v,i)=>nsWDArr[i]>0?+(v/nsWDArr[i]).toFixed(1):0);
+  const avgPpd=(nsPpd.reduce((a,b)=>a+b,0)/nsPpd.length).toFixed(1);
+  const avgErppd=(nsErppd.reduce((a,b)=>a+b,0)/nsErppd.length).toFixed(1);
+  const maxPpd=Math.max(...nsPpd), minPpd=Math.min(...nsPpd);
+
+  document.getElementById('wdKPI').innerHTML=`
+    <div class="stat-mini"><div class="stat-mini-val">${avgPpd}</div><div class="stat-mini-label">เฉลี่ยต่อวันทำการ</div><div class="stat-mini-sub">ยอดรวม (9 เดือน ระบบใหม่)</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${avgErppd}</div><div class="stat-mini-label">ER ต่อวันทำการ</div><div class="stat-mini-sub">เฉลี่ย 9 เดือน</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${maxPpd.toFixed(1)}</div><div class="stat-mini-label">🔴 สูงสุด/วัน</div><div class="stat-mini-sub">${nsMon[nsPpd.indexOf(maxPpd)]}</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${minPpd.toFixed(1)}</div><div class="stat-mini-label">🟢 ต่ำสุด/วัน</div><div class="stat-mini-sub">${nsMon[nsPpd.indexOf(minPpd)]}</div></div>
+    <div class="stat-mini"><div class="stat-mini-val">${wdArr.reduce((a,b)=>a+b,0)}</div><div class="stat-mini-label">รวมวันทำการ 43 เดือน</div><div class="stat-mini-sub">ต.ค.65–เม.ย.69</div></div>
+  `;
+
+  new Chart(document.getElementById('wdChart'),{
+    data:{ labels:MONTHS.slice(0,wdN), datasets:[
+      {type:'bar',label:'วันทำการ',data:wdArr,backgroundColor:'rgba(16,185,129,0.3)',borderColor:'#10b981',borderWidth:1,yAxisID:'y2'},
+      {type:'line',label:'ยอดรวม/วันทำการ',data:ppd,borderColor:'#3b82f6',fill:false,tension:0.3,pointRadius:2,yAxisID:'y'},
+      {type:'line',label:'ER/วันทำการ',data:erppd,borderColor:'#ef4444',fill:false,tension:0.3,pointRadius:2,yAxisID:'y'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>{
+          const suffix=ctx.dataset.yAxisID==='y2'?' วัน':' ราย/วัน';
+          return `${ctx.dataset.label}: ${ctx.parsed.y}${suffix}`;
+        }}}},
+      scales:{x:{ticks:{font:{size:9}}},
+        y:{position:'left',ticks:{font:{size:9}},beginAtZero:true,title:{display:true,text:'ราย/วัน',font:{size:9}}},
+        y2:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:9}},min:0,max:30,title:{display:true,text:'วันทำการ',font:{size:9}}}
+      }
+    }
+  });
+
+  new Chart(document.getElementById('wdPerDayNewChart'),{
+    data:{ labels:nsMon, datasets:[
+      {type:'bar',label:'ยอดรวม/วันทำการ',data:nsPpd,backgroundColor:nsPpd.map(v=>v>=300?'rgba(239,68,68,0.5)':v<=250?'rgba(16,185,129,0.4)':'rgba(59,130,246,0.4)'),borderColor:'#3b82f6',borderWidth:1.5,yAxisID:'y'},
+      {type:'bar',label:'วันทำการ',data:nsWDArr,backgroundColor:'rgba(16,185,129,0.2)',borderColor:'#10b981',borderWidth:1,yAxisID:'y2'},
+      {type:'line',label:'ER/วันทำการ',data:nsErppd,borderColor:'#ef4444',fill:false,tension:0.3,pointRadius:4,yAxisID:'y'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.yAxisID==='y2'?`${ctx.dataset.label}: ${ctx.parsed.y} วัน`:`${ctx.dataset.label}: ${ctx.parsed.y} ราย/วัน`}}},
+      scales:{x:{ticks:{font:{size:10}}},
+        y:{position:'left',ticks:{font:{size:9}},beginAtZero:true},
+        y2:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:9}},min:0,max:30}
+      }
+    }
+  });
+
+  // WD Table
+  let wHtml=`<thead><tr><th>เดือน</th><th>วันทำการ</th><th>ยอดรวม</th><th>ยอดรวม/วันทำการ <span class="wd-badge">WD</span></th><th>ER</th><th>ER/วันทำการ</th><th>%ER</th><th>วันนัด/วันทำการ</th></tr></thead><tbody>`;
+  MONTHS.slice(NS,wdN).forEach((m,i)=>{
+    const wdi=nsWDArr[i], tv_=nsTV[i], er_=nsER[i], sch_=nsSch[i];
+    const ppd_=wdi>0?(tv_/wdi).toFixed(1):'—';
+    const eppd_=wdi>0?(er_/wdi).toFixed(1):'—';
+    const sppd_=wdi>0&&sch_>0?(sch_/wdi).toFixed(1):'—';
+    const erp_=tv_>0?(er_/tv_*100).toFixed(1):'—';
+    const isHigh=+ppd_>=300,isLow=+ppd_<=240;
+    wHtml+=`<tr class="${isHigh?'s-worst':isLow?'s-best':''}">
+      <td>${m}</td><td>${wdi}</td><td>${tv_.toLocaleString()}</td>
+      <td style="font-weight:700">${ppd_} <span class="pct-badge ${isHigh?'red':isLow?'green':''}">ราย/วัน</span></td>
+      <td>${er_.toLocaleString()}</td><td>${eppd_}</td><td>${erp_}%</td><td>${sppd_}</td>
+    </tr>`;
+  });
+  wHtml+='</tbody>';
+  document.getElementById('wdTable').innerHTML=wHtml;
+
+  document.getElementById('wdNarrative').innerHTML=`
+    <strong>🔍 บทวิเคราะห์ภาระงานต่อวันทำการ (ระบบใหม่ ${nsMon[0]}–${nsMon[nsMon.length-1]})</strong>
+    <ul>
+      <li><strong>เฉลี่ยต่อวันทำการ:</strong> ${avgPpd} ราย/วัน — สะท้อนภาระงานจริงดีกว่าค่าเฉลี่ยต่อเดือน เพราะหักวันหยุดราชการแล้ว</li>
+      <li><strong>เดือนสูงสุด: ${nsMon[nsPpd.indexOf(maxPpd)]}</strong> — ${maxPpd.toFixed(1)} ราย/วันทำการ (${(((maxPpd-+avgPpd)/+avgPpd)*100).toFixed(1)}% สูงกว่าค่าเฉลี่ย)</li>
+      <li><strong>เม.ย. (สงกรานต์):</strong> วันทำการน้อย (~18 วัน) แต่ถ้ายอดรวมสูง → ยอดต่อวันทำการจะสูงมาก ต้องเตรียมกำลังพลให้ดี</li>
+      <li><strong>ER ต่อวันทำการ:</strong> ${avgErppd} ครั้ง/วัน — หากเกิน ${(+avgErppd*1.3).toFixed(0)} ครั้ง/วัน ควรเปิด Surge protocol</li>
+      <li><strong>คำแนะนำ:</strong> ใช้ยอด "ต่อวันทำการ" เป็นตัวชี้วัดหลักในการจัดตารางเวร เพราะสะท้อนภาระงานต่อบุคลากรได้แม่นยำกว่ายอดต่อเดือน</li>
+    </ul>`;
+}
+
+// ========== CHART REGISTRY ==========
+window.CHART_REG = {};   // canvasId → Chart instance
+window.CHART_TITLES = {}; // canvasId → title string
+
+function registerChart(id, chartInst, title) {
+  CHART_REG[id] = chartInst;
+  CHART_TITLES[id] = title || id;
+}
+
+function addChartActions(canvasId, title) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const card = canvas.closest('.chart-card') || canvas.closest('.stats-chart-wrap') || canvas.closest('.chart-wrap');
+  if (!card) return;
+  if (card.querySelector('.chart-actions')) return; // already added
+  const pos = card.style.position || getComputedStyle(card).position;
+  if (pos !== 'relative' && pos !== 'absolute') card.style.position = 'relative';
+  const actions = document.createElement('div');
+  actions.className = 'chart-actions';
+  actions.innerHTML = `
+    <button class="chart-action-btn" onclick="expandChart('${canvasId}','${title||canvasId}')">⛶ ขยาย</button>
+    <button class="chart-action-btn download" onclick="downloadChart('${canvasId}','${title||canvasId}')">⬇ PNG</button>`;
+  card.appendChild(actions);
+}
+
+function expandChart(canvasId, title) {
+  const chart = CHART_REG[canvasId];
+  if (!chart) { const c=document.getElementById(canvasId); if(c){const url=c.toDataURL('image/png');showModal(url,title);} return; }
+  const url = chart.toBase64Image('image/png', 1.0);
+  showModal(url, title);
+}
+
+function showModal(imgUrl, title) {
+  document.getElementById('modalChartTitle').textContent = title;
+  document.getElementById('modalChartImg').src = imgUrl;
+  document.getElementById('modalDownloadBtn')._url = imgUrl;
+  document.getElementById('modalDownloadBtn')._title = title;
+  document.getElementById('chartModal').classList.add('open');
+}
+
+function closeChartModal() {
+  document.getElementById('chartModal').classList.remove('open');
+}
+
+function downloadModalChart() {
+  const btn = document.getElementById('modalDownloadBtn');
+  const a = document.createElement('a');
+  a.href = btn._url;
+  a.download = (btn._title || 'chart').replace(/\s+/g,'_') + '.png';
+  a.click();
+}
+
+function downloadChart(canvasId, title) {
+  const chart = CHART_REG[canvasId];
+  const url = chart ? chart.toBase64Image('image/png', 1.0) : document.getElementById(canvasId)?.toDataURL('image/png');
+  if (!url) return;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (title || canvasId).replace(/\s+/g,'_') + '.png';
+  a.click();
+}
+
+// PDF download
+function downloadPDF() {
+  document.querySelectorAll('.stats-panel').forEach(p => p.style.display='block');
+  document.querySelectorAll('.forecast-panel').forEach(p => p.style.display='block');
+  window.print();
+  // restore after print
+  setTimeout(() => {
+    document.querySelectorAll('.stats-panel').forEach((p,i) => p.style.display = i===0?'block':'none');
+    document.querySelectorAll('.forecast-panel').forEach((p,i) => p.style.display = i===0?'block':'none');
+  }, 1000);
+}
+
+// Keyboard close modal
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeChartModal(); });
+
+// ========== MEAN/MEDIAN TOGGLE ==========
+let currentCentralTendency = 'mean'; // or 'median'
+let monthlyDistChartInst = null;
+let currentTVData = null;
+
+function calcMedian(arr) {
+  const sorted = [...arr].filter(v=>v>0).sort((a,b)=>a-b);
+  const mid = Math.floor(sorted.length/2);
+  return sorted.length%2===0 ? Math.round((sorted[mid-1]+sorted[mid])/2) : sorted[mid];
+}
+
+function buildMeanMedianToggle(containerId) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  const tog = document.createElement('span');
+  tog.className = 'stat-toggle';
+  tog.innerHTML = `
+    <button class="stat-toggle-btn active" id="togMean" onclick="setTendency('mean')">Mean</button>
+    <button class="stat-toggle-btn" id="togMedian" onclick="setTendency('median')">Median</button>`;
+  cont.appendChild(tog);
+}
+
+function setTendency(type) {
+  currentCentralTendency = type;
+  document.getElementById('togMean').classList.toggle('active', type==='mean');
+  document.getElementById('togMedian').classList.toggle('active', type==='median');
+  if (monthlyDistChartInst && currentTVData) {
+    const val = type==='mean' ? Math.round(currentTVData.reduce((a,b)=>a+b,0)/currentTVData.length) : calcMedian(currentTVData);
+    const label = type==='mean' ? 'ค่าเฉลี่ย (Mean)' : 'ค่ามัธยฐาน (Median)';
+    // update annotation dataset (last dataset is the annotation)
+    const ds = monthlyDistChartInst.data.datasets;
+    if (ds.length > 1) {
+      ds[1].data = currentTVData.map(()=>val);
+      ds[1].label = label;
+    }
+    monthlyDistChartInst.update();
+    // update KPI card
+    const kpiEl = document.getElementById('centralTendencyKPI');
+    if (kpiEl) kpiEl.innerHTML = `<div class="stat-mini-val">${val.toLocaleString()}</div><div class="stat-mini-label">${label}</div><div class="stat-mini-sub">ยอดบริการรวม</div>`;
+  }
+}
+
+// ========== INIT ==========
+function safeRun(label, fn) {
+  try { fn(); }
+  catch(e) { console.error('[Dashboard] ' + label + ':', e.message || e); }
+}
+
+safeRun('buildKPI', buildKPI);
+safeRun('mainTrendChart', mainTrendChart);
+safeRun('erOpdChart', erOpdChart);
+safeRun('erTrendChart', erTrendChart);
+safeRun('buildProcChart', () => buildProcChart('inj'));
+safeRun('appointmentChart', appointmentChart);
+safeRun('npChart', npChart);
+safeRun('observeChart', observeChart);
+safeRun('fyChart', fyChart);
+safeRun('buildDailyStats', buildDailyStats);
+safeRun('buildMonthlyStats', buildMonthlyStats);
+safeRun('buildQuarterlyStats', buildQuarterlyStats);
+safeRun('buildAnnualStats', buildAnnualStats);
+safeRun('buildForecast', buildForecast);
+safeRun('buildTable', buildTable);
+
+// Register all charts for expand/download
+setTimeout(() => {
+  const chartDefs = [
+    ['mainTrendChart','แนวโน้มยอดบริการรวมรายเดือน'],
+    ['erOpdChart','ER vs OPD รายเดือน'],
+    ['erTrendChart','แนวโน้มภาระงาน ER'],
+    ['procChart','ภาระงานการฉีดยาและหัตถการ'],
+    ['appointmentChart','Well Child Clinic (WCC)'],
+    ['npChart','ตรวจโดยพยาบาลเวชฯ (NP)'],
+    ['observeChart','ผู้ป่วยสังเกตอาการ'],
+    ['fyChart','ยอดบริการรายปีงบประมาณ'],
+    ['dowBarChart','เฉลี่ยผู้รับบริการต่อวันแยกตามวัน'],
+    ['dowApptChart','สัดส่วนผู้ป่วยนัด vs Walk-in'],
+    ['monthlyDistChart','การกระจายตัวยอดบริการรายเดือน'],
+    ['perDayChart','เฉลี่ยต่อวันทำการรายเดือน'],
+    ['qtrTotalChart','ยอดบริการรวมรายไตรมาส'],
+    ['qtrErPctChart','%ER ต่อยอดรวมรายไตรมาส'],
+    ['annualCompChart','เปรียบเทียบตัวชี้วัดหลักรายปีงบ'],
+    ['annualTrendChart','แนวโน้มรายปีงบ'],
+    ['forecastChart','พยากรณ์ยอดผู้ป่วย'],
+    ['forecastERChart','ER คาดการณ์'],
+    ['seasonalChart','Seasonal Pattern'],
+    ['seasonalIndexChart','Seasonal Index'],
+    ['yoyChart','YoY Growth - ยอดรวม'],
+    ['yoyERChart','YoY Growth - ER'],
+    ['wdChart','วันทำการ + ยอด/วันทำการ'],
+    ['wdPerDayNewChart','ยอด/วันทำการ (ระบบใหม่)'],
+  ];
+  chartDefs.forEach(([id, title]) => {
+    const c = document.getElementById(id);
+    if (c) {
+      const card = c.closest('.chart-card') || c.parentElement;
+      if (card) {
+        if (card.style.position !== 'relative') card.style.position = 'relative';
+        if (!card.querySelector('.chart-actions')) {
+          const actions = document.createElement('div');
+          actions.className = 'chart-actions';
+          actions.innerHTML = `<button class="chart-action-btn" onclick="expandChart('${id}','${title}')">⛶ ขยาย</button><button class="chart-action-btn download" onclick="downloadChart('${id}','${title}')">⬇ PNG</button>`;
+          card.appendChild(actions);
+        }
+        CHART_REG[id] = Chart.getChart(c);
+      }
+    }
+  });
+  // Add Mean/Median toggle to Monthly distribution chart header
+  const monthlyHdr = document.querySelector('#tabMonthly .two-col-stats > div:first-child > div:first-child');
+  if (monthlyHdr) buildMeanMedianToggle(monthlyHdr.id || (monthlyHdr.setAttribute('id','mhdrtoggle'),'mhdrtoggle'));
+}, 300);
+
+</script>
+</body>
+</html>
